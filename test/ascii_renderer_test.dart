@@ -109,6 +109,7 @@ void main() {
 
     group('cache key generation', () {
       test('identical vectors produce identical cache keys', () {
+        /*
         final v1 = Vector6()
           ..v0 = 0.5
           ..v1 = 0.3
@@ -123,6 +124,7 @@ void main() {
           ..v3 = 0.8
           ..v4 = 0.2
           ..v5 = 0.9;
+          */
 
         // Use reflection or test through render to verify cache works
         final image = img.Image(width: 10, height: 10);
