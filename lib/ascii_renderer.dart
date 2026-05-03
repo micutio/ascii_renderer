@@ -1,5 +1,8 @@
+import 'dart:io';
 import 'dart:math';
+
 import 'package:image/image.dart' as img;
+
 import 'src/character_shape.dart';
 import 'src/vector6.dart';
 
@@ -52,6 +55,53 @@ class AsciiRenderer {
 
       Vector6 v = _sampleCell6D(bmp, 0, 0, cellWidth, cellHeight);
       _characterShapes.add(CharacterShape(c, v));
+    }
+
+    // Normalization logic
+    for (int i = 0; i < 6; i++) {
+      _maxVectorVals[i] = _characterShapes
+          .map((cs) => cs.shapeVector[i])
+          .reduce(max);
+    }
+
+    for (var cs in _characterShapes) {
+      Vector6 v = cs.shapeVector;
+      for (int i = 0; i < 6; i++) {
+        v[i] = _maxVectorVals[i] > 0 ? v[i] / _maxVectorVals[i] : 0.0;
+      }
+    }
+
+    _lookupCache.clear();
+  }
+
+  void initializeFromBitmap(String pathToFontPng) {
+    final File file = File(pathToFontPng);
+    final img.Image? fontSheet = img.decodeImage(file.readAsBytesSync());
+
+    if (fontSheet == null) return;
+
+    // Most CP437 sheets are 16x16 characters
+    int charWidth = fontSheet.width ~/ 16;
+    int charHeight = fontSheet.height ~/ 16;
+
+    for (int i = 0; i < 256; i++) {
+      int col = i % 16;
+      int row = i ~/ 16;
+
+      // Crop the specific character from the grid
+      img.Image charBmp = img.copyCrop(
+        fontSheet,
+        x: col * charWidth,
+        y: row * charHeight,
+        width: charWidth,
+        height: charHeight,
+      );
+
+      // Map the index to the CP437 string character (using the long string from earlier)
+      String charMapping = charset[i];
+
+      Vector6 v = _sampleCell6D(charBmp, 0, 0, charWidth, charHeight);
+      _characterShapes.add(CharacterShape(charMapping, v));
     }
 
     // Normalization logic

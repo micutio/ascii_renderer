@@ -28,7 +28,7 @@ void main() async {
 
   print("Initializing renderer (computing 6D shape vectors)...");
   final AsciiRenderer renderer = AsciiRenderer();
-  renderer.initialize();
+  renderer.initializeFromBitmap("./font/iosevka.png");
 
   // Calculate rows to maintain the image's aspect ratio.
   // Monospace characters are roughly twice as tall as they are wide (1:2 ratio).
