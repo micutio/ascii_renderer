@@ -161,7 +161,7 @@ Short retention keeps pull-request artifacts available for download without stor
 
 `dart compile exe bin/ascii_renderer.dart -o ascii_renderer` remains the single-file alternative. Use it when the package has no `hook/build.dart`. If a build hook is added later, `dart compile exe` skips hooks and fails; `dart build cli` runs them and is the command to keep. This package has no hook today, so either command compiles. Prefer `dart build cli` so the reference pipeline matches the layout Dart uses for `dart install`.
 
-`font/iosevka.png` is already in the repo. The entrypoint loads that file and exits when `input.jpg` is missing. Compilation itself does not need those files. A smoke run of the binary waits until the entrypoint accepts input and output paths.
+`font/iosevka.png` is already in the repo. The entrypoint accepts `--input`, `--output`, and `--font`. After `dart build cli`, `dart run tool/smoke_cli.dart` checks `--help` and renders a generated one-pixel JPEG.
 
 ## Deployment targets for this CLI
 

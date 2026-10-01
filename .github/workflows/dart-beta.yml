@@ -63,6 +63,37 @@ jobs:
       - name: Analyze project source
         run: dart analyze --fatal-infos
 
+  fix:
+    name: Fix (beta)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - uses: dart-lang/setup-dart@9a04e6d73cca37bd455e0608d7e5092f881fd603 # v1.0.0
+        with:
+          sdk: beta
+
+      - name: Cache pub dependencies
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.pub-cache
+          key: pub-beta-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
+          restore-keys: pub-beta-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: dart pub get
+
+      - name: Check automated fixes
+        shell: bash
+        run: |
+          output="$(dart fix --dry-run)"
+          echo "$output"
+          if ! grep -q "Nothing to fix!" <<< "$output"; then
+            echo "::error::Automated Dart fixes are available. Run 'dart fix --apply'."
+            exit 1
+          fi
+
   test:
     name: Test (beta)
     runs-on: ubuntu-latest
@@ -110,3 +141,6 @@ jobs:
 
       - name: Build CLI bundle
         run: dart build cli
+
+      - name: Smoke test CLI bundle
+        run: dart run tool/smoke_cli.dart

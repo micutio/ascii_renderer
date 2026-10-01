@@ -1,6 +1,6 @@
 # Further CI improvements
 
-Items 1 through 6 below are applied on top of the job split in [enhanced_workflow.md](enhanced_workflow.md). The smoke test in item 7 is still skipped: the entrypoint does not accept input and output paths, so a CI run cannot point the binary at a generated one-pixel image. `font/iosevka.png` is already in the repo. Item 8 remains optional.
+Items 1 through 7 below are applied on top of the job split in [enhanced_workflow.md](enhanced_workflow.md). The Ubuntu test job also collects `dart test --coverage` and uploads `coverage/lcov.info`. Dependency review, reusable workflows, and branch protection in item 8 remain optional.
 
 Apply them in the order below. Each item names the file to change and why it belongs in a reference project.
 
@@ -155,7 +155,7 @@ These are useful once the items above are in place. They are not required for th
 
 ### Coverage
 
-`dart test --coverage=coverage` writes a coverage directory. A later step can convert it with `dart pub global run coverage:format_coverage` and upload an `lcov` artifact from the Ubuntu test job only. One OS is enough; line coverage does not change across Windows and macOS for this package.
+Applied on the Ubuntu test job in [`.github/workflows/dart.yml`](../.github/workflows/dart.yml). `dart test --coverage=coverage` writes a coverage directory. `dart run coverage:format_coverage` converts it, and the job uploads `coverage/lcov.info`. Windows and macOS still run `dart test` without coverage. `coverage` is a dev dependency so the formatter version stays in the lockfile.
 
 ### Dependency review on pull requests
 
