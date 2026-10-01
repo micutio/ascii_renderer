@@ -6,12 +6,21 @@ updates:
     directory: /
     schedule:
       interval: weekly
+      day: friday
+      time: "08:00"
+      timezone: Asia/Singapore
+    cooldown:
+      default-days: 7
+      semver-major-days: 14
+      semver-minor-days: 7
+      semver-patch-days: 3
     open-pull-requests-limit: 5
     labels:
       - dependencies
     commit-message:
       prefix: "chore"
       include: scope
+    versioning-strategy: increase-if-necessary
     groups:
       pub-minor-and-patch:
         update-types:
@@ -22,13 +31,25 @@ updates:
     directory: /
     schedule:
       interval: weekly
+      day: friday
+      time: "08:00"
+      timezone: Asia/Singapore
+    cooldown:
+      default-days: 7
+      semver-major-days: 14
+      semver-minor-days: 7
+      semver-patch-days: 3
     open-pull-requests-limit: 5
     labels:
       - dependencies
+      - github-actions
     commit-message:
       prefix: "chore"
       include: scope
     groups:
-      github-actions:
+      github-actions-minor-and-patch:
         patterns:
           - "*"
+        update-types:
+          - minor
+          - patch
