@@ -1,6 +1,6 @@
 # Plan: split CI into format, analyze, test, and build
 
-This plan extends [`.github/workflows/dart.yml`](../.github/workflows/dart.yml). It stays a proposal until that file is edited. Background on the current single job is in [workflows.md](workflows.md).
+This plan is applied in [`.github/workflows/dart.yml`](../.github/workflows/dart.yml). Background on the previous single job is in [workflows.md](workflows.md).
 
 ## Goal
 
