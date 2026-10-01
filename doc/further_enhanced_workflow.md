@@ -1,6 +1,6 @@
 # Further CI improvements
 
-This list sits on top of the job split in [enhanced_workflow.md](enhanced_workflow.md). The split makes format, analyze, test, and build separate and runs test and build on Windows, macOS, and Linux. The items below make that pipeline safer to copy into later Dart repositories.
+Items 1 through 6 below are applied on top of the job split in [enhanced_workflow.md](enhanced_workflow.md). The smoke test in item 7 is still skipped: the entrypoint does not accept input and output paths, so a CI run cannot point the binary at a generated one-pixel image. `font/iosevka.png` is already in the repo. Item 8 remains optional.
 
 Apply them in the order below. Each item names the file to change and why it belongs in a reference project.
 
@@ -40,6 +40,8 @@ on:
 
 Do not add `beta` to the matrix that pull requests require. A red beta job on every pull request trains people to ignore required checks.
 
+Applied as [`.github/workflows/dart-beta.yml`](../.github/workflows/dart-beta.yml). Pull-request checks stay on `sdk: stable`. The beta workflow runs format, analyze, test, and build on Ubuntu every Monday at 06:00 UTC. Job names are suffixed `(beta)` so they stay distinct from the required stable checks.
+
 ## 3. Cache the pub cache
 
 `dart pub get` currently downloads the graph on every job and every OS. Cache the pub cache and key it by OS and lockfile:
@@ -59,7 +61,7 @@ On Windows the pub cache lives under the user profile, not `~/.pub-cache`. Use a
 path: ${{ runner.os == 'Windows' && '~\\AppData\\Local\\Pub\\Cache' || '~/.pub-cache' }}
 ```
 
-Confirm the path on one Windows run before treating the cache as required. A wrong path is a cache miss, and the job still succeeds via `dart pub get`.
+A local Windows run confirmed the pub cache at `%LOCALAPPDATA%\Pub\Cache` (`~/AppData/Local/Pub/Cache`). The workflow uses that path on Windows and `~/.pub-cache` elsewhere. A wrong path is a cache miss, and the job still succeeds via `dart pub get`.
 
 Commit [`pubspec.lock`](../pubspec.lock) (it is already in the tree) so the cache key is stable and CI resolves the same versions as local development.
 
@@ -68,10 +70,10 @@ Commit [`pubspec.lock`](../pubspec.lock) (it is already in the tree) so the cach
 `dart-lang/setup-dart` is already pinned to `9a04e6d73cca37bd455e0608d7e5092f881fd603`. Add the release tag in a comment on that line so reviewers can see what moved when Dependabot updates the SHA:
 
 ```yaml
-- uses: dart-lang/setup-dart@9a04e6d73cca37bd455e0608d7e5092f881fd603 # <tag>
+- uses: dart-lang/setup-dart@9a04e6d73cca37bd455e0608d7e5092f881fd603 # v1.0.0
 ```
 
-Look up the tag that points at that commit and write it in place of `<tag>` before landing the comment. Leave the comment off until that lookup is done.
+That commit is the `v1.0.0` tag. `actions/checkout` is pinned to `v4.4.0`, `actions/upload-artifact` to `v4.6.2`, and `actions/cache` to `v4.3.0`.
 
 Pin `actions/checkout` and `actions/upload-artifact` the same way. A floating `@v4` tag moves when the maintainer retags it. Dependabot's `github-actions` ecosystem updates SHA pins, which is why the comment matters: the pull request diff shows both the new SHA and the new version.
 
@@ -143,7 +145,7 @@ The key is the command users type. The value is the file `bin/ascii_renderer.dar
 
 `dart build cli` proves the compiler accepts the program. It does not prove the bundle starts.
 
-The entrypoint loads `./font/iosevka.png` and returns immediately when `input.jpg` is missing. The repository has no `font/` directory. Add the font file first, then add a step after `dart build cli` that runs the bundle with `--help` or a tiny fixture image.
+The entrypoint loads `./font/iosevka.png` (already tracked, next to `font/courier.png`) and returns immediately when `input.jpg` is missing. After `dart build cli`, run the bundle with `--help` or a tiny fixture image.
 
 Until the entrypoint accepts input and output paths (already listed in the README TODO), the smoke test has to run with the working directory set to a fixture folder that contains both the font and a sample image. Skip the smoke step rather than checking in a multi-megabyte `input.jpg` solely to satisfy CI. A one-pixel JPEG generated in the job is enough once paths are configurable.
 

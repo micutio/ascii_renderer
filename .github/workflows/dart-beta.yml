@@ -1,15 +1,11 @@
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
+# Weekly check against the Dart beta SDK. Failures here do not block merges.
+# Pull requests keep using the stable jobs in dart.yml.
 
-name: Dart
+name: Dart (beta)
 
 on:
-  push:
-    branches: ["main", "feature/**", "bugfix/**"]
-  pull_request:
-    branches: ["main", "feature/**", "bugfix/**"]
+  schedule:
+    - cron: "0 6 * * 1"
 
 permissions:
   contents: read
@@ -20,23 +16,22 @@ concurrency:
 
 jobs:
   format:
-    name: Format
+    name: Format (beta)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      # https://github.com/dart-lang/setup-dart/blob/main/README.md
       - uses: dart-lang/setup-dart@9a04e6d73cca37bd455e0608d7e5092f881fd603 # v1.0.0
         with:
-          sdk: stable
+          sdk: beta
 
       - name: Cache pub dependencies
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
-          path: ${{ runner.os == 'Windows' && '~/AppData/Local/Pub/Cache' || '~/.pub-cache' }}
-          key: pub-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
-          restore-keys: pub-${{ runner.os }}-
+          path: ~/.pub-cache
+          key: pub-beta-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
+          restore-keys: pub-beta-${{ runner.os }}-
 
       - name: Install dependencies
         run: dart pub get
@@ -45,7 +40,7 @@ jobs:
         run: dart format --output=none --set-exit-if-changed .
 
   analyze:
-    name: Analyze
+    name: Analyze (beta)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -53,14 +48,14 @@ jobs:
 
       - uses: dart-lang/setup-dart@9a04e6d73cca37bd455e0608d7e5092f881fd603 # v1.0.0
         with:
-          sdk: stable
+          sdk: beta
 
       - name: Cache pub dependencies
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
-          path: ${{ runner.os == 'Windows' && '~/AppData/Local/Pub/Cache' || '~/.pub-cache' }}
-          key: pub-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
-          restore-keys: pub-${{ runner.os }}-
+          path: ~/.pub-cache
+          key: pub-beta-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
+          restore-keys: pub-beta-${{ runner.os }}-
 
       - name: Install dependencies
         run: dart pub get
@@ -69,27 +64,22 @@ jobs:
         run: dart analyze --fatal-infos
 
   test:
-    name: Test
+    name: Test (beta)
+    runs-on: ubuntu-latest
     timeout-minutes: 15
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        sdk: [stable]
-    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - uses: dart-lang/setup-dart@9a04e6d73cca37bd455e0608d7e5092f881fd603 # v1.0.0
         with:
-          sdk: ${{ matrix.sdk }}
+          sdk: beta
 
       - name: Cache pub dependencies
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
-          path: ${{ runner.os == 'Windows' && '~/AppData/Local/Pub/Cache' || '~/.pub-cache' }}
-          key: pub-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
-          restore-keys: pub-${{ runner.os }}-
+          path: ~/.pub-cache
+          key: pub-beta-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
+          restore-keys: pub-beta-${{ runner.os }}-
 
       - name: Install dependencies
         run: dart pub get
@@ -98,38 +88,25 @@ jobs:
         run: dart test
 
   build:
-    name: Build
+    name: Build (beta)
+    runs-on: ubuntu-latest
     timeout-minutes: 15
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        sdk: [stable]
-    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - uses: dart-lang/setup-dart@9a04e6d73cca37bd455e0608d7e5092f881fd603 # v1.0.0
         with:
-          sdk: ${{ matrix.sdk }}
+          sdk: beta
 
       - name: Cache pub dependencies
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
-          path: ${{ runner.os == 'Windows' && '~/AppData/Local/Pub/Cache' || '~/.pub-cache' }}
-          key: pub-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
-          restore-keys: pub-${{ runner.os }}-
+          path: ~/.pub-cache
+          key: pub-beta-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
+          restore-keys: pub-beta-${{ runner.os }}-
 
       - name: Install dependencies
         run: dart pub get
 
       - name: Build CLI bundle
         run: dart build cli
-
-      - name: Upload CLI bundle
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: cli-${{ matrix.os }}
-          path: build/cli/
-          retention-days: 7
-          if-no-files-found: error
