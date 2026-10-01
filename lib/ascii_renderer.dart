@@ -213,6 +213,17 @@ class AsciiRenderer {
     int width,
     int height,
   ) {
+    if (width < 2 || height < 3) {
+      final lightness = _averageLightness(bmp, startX, startY, width, height);
+      return Vector6()
+        ..v0 = lightness
+        ..v1 = lightness
+        ..v2 = lightness
+        ..v3 = lightness
+        ..v4 = lightness
+        ..v5 = lightness;
+    }
+
     int halfW = width ~/ 2;
     int thirdH = height ~/ 3;
     int staggerY = height ~/ 12;

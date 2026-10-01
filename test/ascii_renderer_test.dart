@@ -189,10 +189,10 @@ void main() {
         }
 
         final result = renderer.render(image, 256, 1, 1.0);
-        final line = result.trim();
+        final line = result.split('\n').first;
 
-        // Should use characters (at least the line should have content)
-        expect(line.isNotEmpty, true);
+        // Should use at least one non-space character.
+        expect(line.trim().isNotEmpty, true);
         // Should have 256 characters
         expect(line.length, 256);
       });
