@@ -1,6 +1,6 @@
 # Plan: release workflow
 
-This plan adds [`.github/workflows/release.yml`](../.github/workflows/release.yml). The file is not created by this document. CI on pull requests stays in [`.github/workflows/dart.yml`](../.github/workflows/dart.yml), as described in [enhanced_workflow.md](enhanced_workflow.md).
+This plan is applied in [`.github/workflows/release.yml`](../.github/workflows/release.yml). CI on pull requests stays in [`.github/workflows/dart.yml`](../.github/workflows/dart.yml), as described in [enhanced_workflow.md](enhanced_workflow.md). The publish job creates a draft release until `draft` is set to `false`.
 
 The release publishes native CLI bundles for Windows, macOS, and Linux. WASM, web, Android, and iOS stay out of this workflow for the reasons in the enhanced-workflow plan.
 
