@@ -79,6 +79,7 @@ void main(List<String> args) {
   );
 
   stopwatch.stop();
+  stdout.writeln(asciiArt);
   stdout.writeln('Render completed in ${stopwatch.elapsedMilliseconds} ms.');
 
   File(options.outputPath).writeAsStringSync(asciiArt);
