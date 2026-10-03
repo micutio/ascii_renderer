@@ -25,3 +25,4 @@ dart run bin/ascii_renderer.dart --input input.jpg --output output.txt --columns
 - [ ] Add command line flags to customize ASCII characters to use.
 - [ ] Decide whether to add color output
 - [ ] Check out Dart argument parsing libraries to use
+- [ ] Option for no file output
