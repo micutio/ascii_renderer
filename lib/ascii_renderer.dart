@@ -39,8 +39,7 @@ class AsciiRenderer {
   /// Initialise the ASCII renderer with a front passed as image,
   /// in form of raw bytes.
   void initializeFromFontSheet(img.Image fontSheetImg) {
-    // _initCharacterShapesFromImg(fontSheetImg);
-    _initCharacterShapesFromDefault();
+    _initCharacterShapesFromImg(fontSheetImg);
     _normaliseCharacterValues();
     _lookupCache.clear();
   }

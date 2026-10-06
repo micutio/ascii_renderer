@@ -32,7 +32,12 @@ int _smoke() {
     pixel.setPixel(0, 0, img.ColorRgb8(32, 32, 32));
     File(imagePath).writeAsBytesSync(img.encodeJpg(pixel));
 
-    final font = p.join(Directory.current.path, 'font', 'iosevka.png');
+    final font = p.join(
+      Directory.current.path,
+      'assets',
+      'font',
+      'iosevka.png',
+    );
     final run = Process.runSync(binary, [
       '--input',
       imagePath,
