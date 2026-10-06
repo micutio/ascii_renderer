@@ -13,7 +13,7 @@ Usage: ascii_renderer [options]
 Options:
   --input <path>     Image to render. Defaults to input.jpg.
   --output <path>    File to write. Defaults to output.txt.
-  --font <path>      Font bitmap. Defaults to font/iosevka.png.
+  --font <path>      Font bitmap. Defaults to assets/font/iosevka.png.
   --cols <value>     Target number of columns per image. Defaults to 240.
   --contrast <value> Target contrast, 1.0 is normal, >1.0 = sharper edges.
   -h, --help         Show this help.
@@ -61,7 +61,13 @@ void main(List<String> args) {
 
   stdout.writeln('Initializing renderer (computing 6D shape vectors)...');
   final AsciiRenderer renderer = AsciiRenderer();
-  renderer.initializeFromBitmap(options.fontPath);
+  img.Image? fontSheet = img.decodeImage(fontFile.readAsBytesSync());
+  if (fontSheet == null) {
+    stdout.writeln("Unable to load image ${options.fontPath}");
+    return;
+  }
+
+  renderer.initializeFromFontSheet(fontSheet);
 
   // Calculate rows to maintain the image's aspect ratio.
   // Monospace characters are roughly twice as tall as they are wide (1:2 ratio).
@@ -108,7 +114,7 @@ class _Options {
   static _Options parse(List<String> args) {
     var imagePath = 'input.jpg';
     var outputPath = 'output.txt';
-    var fontPath = 'font/iosevka.png';
+    var fontPath = 'assets/font/iosevka.png';
     var cols = 240;
     var contrast = 1.0;
     var help = false;

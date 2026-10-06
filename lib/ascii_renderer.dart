@@ -1,10 +1,13 @@
 import 'dart:io';
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:image/image.dart' as img;
 
 import 'src/character_shape.dart';
 import 'src/vector6.dart';
+
+// TODO: Add option to choose between standard ASCII, extended ASCII and Cp437.
 
 /// Render a given image to ascii text.
 class AsciiRenderer {
@@ -28,8 +31,24 @@ class AsciiRenderer {
   /// The Cache: Maps a quantized 6D shape directly to a character
   final Map<int, String> _lookupCache = {};
 
-  /// Create the list of character shapes from [charset].
-  void initialize() {
+  /// Initialise the ASCII renderer with the default font, Arial.
+  void initializeFromDefault() {
+    _initCharacterShapesFromDefault();
+    _normaliseCharacterValues();
+    _lookupCache.clear();
+  }
+
+  /// Initialise the ASCII renderer with a front passed as image,
+  /// in form of raw bytes.
+  void initializeFromFontSheet(img.Image fontSheetImg) {
+    _initCharacterShapesFromImg(fontSheetImg);
+    _normaliseCharacterValues();
+    _lookupCache.clear();
+  }
+
+  /// Creates a list of character shapes from the default font, Arial
+  /// based on the character set [charset].
+  void _initCharacterShapesFromDefault() {
     int cellWidth = 12;
     int cellHeight = 24;
 
@@ -56,39 +75,20 @@ class AsciiRenderer {
       Vector6 v = _sampleCell6D(bmp, 0, 0, cellWidth, cellHeight);
       _characterShapes.add(CharacterShape(c, v));
     }
-
-    // Normalization logic
-    for (int i = 0; i < 6; i++) {
-      _maxVectorVals[i] = _characterShapes
-          .map((cs) => cs.shapeVector[i])
-          .reduce(max);
-    }
-
-    for (var cs in _characterShapes) {
-      Vector6 v = cs.shapeVector;
-      for (int i = 0; i < 6; i++) {
-        v[i] = _maxVectorVals[i] > 0 ? v[i] / _maxVectorVals[i] : 0.0;
-      }
-    }
-
-    _lookupCache.clear();
   }
 
-  void initializeFromBitmap(String pathToFontPng) {
-    final File file = File(pathToFontPng);
-    final img.Image? fontSheet = img.decodeImage(file.readAsBytesSync());
-
-    if (fontSheet == null) return;
-
-    // Most CP437 sheets are 16x16 characters
-    int charWidth = fontSheet.width ~/ 16;
+  /// Creates a list of character shapes from the custom font passed
+  /// as bytes, based on the character set [charset].
+  void _initCharacterShapesFromImg(img.Image fontSheet) {
+    // Most CP437 sheets are 16x16 characters.
+    int charWidth = fontSheet.width ~/ 16; // `~/` is truncating division.
     int charHeight = fontSheet.height ~/ 16;
 
     for (int i = 0; i < 256; i++) {
       int col = i % 16;
       int row = i ~/ 16;
 
-      // Crop the specific character from the grid
+      // Crop the specific character from the grid.
       img.Image charBmp = img.copyCrop(
         fontSheet,
         x: col * charWidth,
@@ -97,14 +97,15 @@ class AsciiRenderer {
         height: charHeight,
       );
 
-      // Map the index to the CP437 string character (using the long string from earlier)
+      // Map the index to the CP437 string character.
       String charMapping = charset[i];
-
-      Vector6 v = _sampleCell6D(charBmp, 0, 0, charWidth, charHeight);
-      _characterShapes.add(CharacterShape(charMapping, v));
+      Vector6 vec = _sampleCell6D(charBmp, 0, 0, charWidth, charHeight);
+      _characterShapes.add(CharacterShape(charMapping, vec));
     }
+  }
 
-    // Normalization logic
+  /// Normalise character light value vectors.
+  void _normaliseCharacterValues() {
     for (int i = 0; i < 6; i++) {
       _maxVectorVals[i] = _characterShapes
           .map((cs) => cs.shapeVector[i])
@@ -117,10 +118,10 @@ class AsciiRenderer {
         v[i] = _maxVectorVals[i] > 0 ? v[i] / _maxVectorVals[i] : 0.0;
       }
     }
-
-    _lookupCache.clear();
   }
 
+  /// Render an image to ASCII characters.
+  /// Returns the image as ASCII string.
   String render(
     img.Image image,
     int columns,

@@ -9,7 +9,7 @@ void main() {
 
     setUp(() {
       renderer = AsciiRenderer();
-      renderer.initialize();
+      renderer.initializeFromDefault();
     });
 
     group('constants', () {
@@ -36,7 +36,7 @@ void main() {
 
       test('initialization completes without error', () {
         final newRenderer = AsciiRenderer();
-        newRenderer.initialize();
+        newRenderer.initializeFromDefault();
         // If we get here without throwing, the test passes
       });
     });
