@@ -79,7 +79,7 @@ class AsciiRenderer {
   /// as bytes, based on the character set [charset].
   void _initCharacterShapesFromImg(img.Image fontSheet) {
     // Most CP437 sheets are 16x16 characters.
-    int charWidth = fontSheet.width ~/ 16; // `~/` is truncating division.
+    int charWidth = fontSheet.width ~/ 16;
     int charHeight = fontSheet.height ~/ 16;
 
     for (int i = 0; i < 256; i++) {
@@ -97,7 +97,16 @@ class AsciiRenderer {
 
       // Map the index to the CP437 string character.
       String charMapping = charset[i];
-      Vector6 vec = _sampleCell6D(charBmp, 0, 0, charWidth, charHeight);
+      // Vector6 vec = _sampleCell6D(charBmp, 0, 0, charWidth, charHeight);
+      Vector6 vec = _sampleCell6DWithRatio(
+        charBmp,
+        1,
+        1,
+        0,
+        0,
+        charWidth,
+        charHeight,
+      );
       _characterShapes.add(CharacterShape(charMapping, vec));
     }
   }
@@ -203,8 +212,54 @@ class AsciiRenderer {
 
   // --- Image Sampling ---
 
+  /// Adapter method to scale the lightness sampling area to character
+  /// proportions.
+  Vector6 _sampleCell6DWithRatio(
+    img.Image bmp,
+    int widthRatio,
+    int heightRatio,
+    int startX,
+    int startY,
+    int width,
+    int height,
+  ) {
+    if (widthRatio < heightRatio) {
+      double scaledWidth = widthRatio / heightRatio;
+      int charWidth = ((width * scaledWidth) as num).toInt();
+      int widthOffset = ((1 - scaledWidth) * width) ~/ 2;
+      // adapt parameters
+      startX = startX + widthOffset;
+      width = charWidth;
+      //return _sampleCell6D(
+      //  bmp,
+      //  startX + widthOffset,
+      //  startY,
+      //  charWidth,
+      //  height,
+      //);
+    }
+    if (widthRatio > heightRatio) {
+      double scaledHeight = heightRatio / widthRatio;
+      int charHeight = ((height * scaledHeight) as num).toInt();
+      int heightOffset = ((1 - scaledHeight) * height) ~/ 2;
+      // adapt parameters
+      startY = startY + heightOffset;
+      height = charHeight;
+      //return _sampleCell6D(
+      //  bmp,
+      //  startX,
+      //  startY + heightOffset,
+      //  width,
+      //  charHeight,
+      //);
+    }
+
+    return _sampleCell6D(bmp, startX, startY, width, height);
+  }
+
   /// Samples average lightness values for all six zones of the image and stores
   /// them in a vector.
+  /// [bmp] is the image of the caracter to be classified.
   Vector6 _sampleCell6D(
     img.Image bmp,
     int startX,
