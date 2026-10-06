@@ -1,6 +1,4 @@
-import 'dart:io';
 import 'dart:math';
-import 'dart:typed_data';
 
 import 'package:image/image.dart' as img;
 
@@ -41,7 +39,8 @@ class AsciiRenderer {
   /// Initialise the ASCII renderer with a front passed as image,
   /// in form of raw bytes.
   void initializeFromFontSheet(img.Image fontSheetImg) {
-    _initCharacterShapesFromImg(fontSheetImg);
+    // _initCharacterShapesFromImg(fontSheetImg);
+    _initCharacterShapesFromDefault();
     _normaliseCharacterValues();
     _lookupCache.clear();
   }
