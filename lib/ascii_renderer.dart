@@ -13,6 +13,8 @@ class AsciiRenderer {
   static const int quantizationSteps = 15;
 
   /// Set of characters from which we render the ascii image.
+  /// The null character is replaced with a space to avoid
+  /// unintended consequences.
   static const String charset =
       " ☺☻♥♦♣♠•◘○◙♂♀♪♫☼►◄↕‼¶§▬↨↑↓→←∟↔▲▼" // 0-31 (Control characters/Symbols)
       " !\"#\$%&'()*+,-./0123456789:;<=>?" // 32-63 (Standard ASCII)
@@ -38,8 +40,12 @@ class AsciiRenderer {
 
   /// Initialise the ASCII renderer with a front passed as image,
   /// in form of raw bytes.
-  void initializeFromFontSheet(img.Image fontSheetImg) {
-    _initCharacterShapesFromImg(fontSheetImg);
+  void initializeFromFontSheet(
+    img.Image fontSheetImg,
+    int charWidth,
+    int charHeight,
+  ) {
+    _initCharacterShapesFromImg(fontSheetImg, charWidth, charHeight);
     _normaliseCharacterValues();
     _lookupCache.clear();
   }
@@ -77,7 +83,11 @@ class AsciiRenderer {
 
   /// Creates a list of character shapes from the custom font passed
   /// as bytes, based on the character set [charset].
-  void _initCharacterShapesFromImg(img.Image fontSheet) {
+  void _initCharacterShapesFromImg(
+    img.Image fontSheet,
+    int charWidthRatio,
+    int charHeightRatio,
+  ) {
     // Most CP437 sheets are 16x16 characters.
     int charWidth = fontSheet.width ~/ 16;
     int charHeight = fontSheet.height ~/ 16;
@@ -100,8 +110,8 @@ class AsciiRenderer {
       // Vector6 vec = _sampleCell6D(charBmp, 0, 0, charWidth, charHeight);
       Vector6 vec = _sampleCell6DWithRatio(
         charBmp,
-        1,
-        1,
+        charWidthRatio,
+        charHeightRatio,
         0,
         0,
         charWidth,
@@ -212,8 +222,8 @@ class AsciiRenderer {
 
   // --- Image Sampling ---
 
-  /// Adapter method to scale the lightness sampling area to character
-  /// proportions.
+  /// Adapter method for scaling the sampling area to character proportions
+  /// before running [_sampleCell6D].
   Vector6 _sampleCell6DWithRatio(
     img.Image bmp,
     int widthRatio,

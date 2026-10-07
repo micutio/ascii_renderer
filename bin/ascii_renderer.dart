@@ -11,12 +11,13 @@ Render an image as ASCII art.
 Usage: ascii_renderer [options]
 
 Options:
-  --input <path>     Image to render. Defaults to input.jpg.
-  --output <path>    File to write. Defaults to output.txt.
-  --font <path>      Font bitmap. Defaults to assets/font/iosevka.png.
-  --cols <value>     Target number of columns per image. Defaults to 240.
-  --contrast <value> Target contrast, 1.0 is normal, >1.0 = sharper edges.
-  -h, --help         Show this help.
+  --input <path>       Image to render. Defaults to input.jpg.
+  --output <path>      File to write. Defaults to output.txt.
+  --font <path>        Font bitmap. Defaults to assets/font/iosevka.png.
+  --char_ratio <w> <h> Width by height ratio of the font characters. Defaults to 1x2.
+  --cols <value>       Target number of columns per image. Defaults to 240.
+  --contrast <value>   Target contrast, 1.0 is normal, >1.0 = sharper edges.
+  -h, --help           Show this help.
 ''';
 
 void main(List<String> args) {
@@ -44,14 +45,6 @@ void main(List<String> args) {
     return;
   }
 
-  stdout.writeln('Loading image...');
-  final img.Image? targetImage = img.decodeImage(file.readAsBytesSync());
-  if (targetImage == null) {
-    stderr.writeln('Failed to decode image.');
-    exitCode = 1;
-    return;
-  }
-
   final File fontFile = File(options.fontPath);
   if (!fontFile.existsSync()) {
     stderr.writeln("Error: Font bitmap '${options.fontPath}' was not found.");
@@ -67,7 +60,22 @@ void main(List<String> args) {
     return;
   }
 
-  renderer.initializeFromFontSheet(fontSheet);
+  stdout.writeln(
+    'Font character ratio: ${options.fontCharWidth} by ${options.fontCharHeight}',
+  );
+  renderer.initializeFromFontSheet(
+    fontSheet,
+    options.fontCharWidth,
+    options.fontCharHeight,
+  );
+
+  stdout.writeln('Loading image...');
+  final img.Image? targetImage = img.decodeImage(file.readAsBytesSync());
+  if (targetImage == null) {
+    stderr.writeln('Failed to decode image.');
+    exitCode = 1;
+    return;
+  }
 
   // Calculate rows to maintain the image's aspect ratio.
   // Monospace characters are roughly twice as tall as they are wide (1:2 ratio).
@@ -99,6 +107,8 @@ class _Options {
     required this.imagePath,
     required this.outputPath,
     required this.fontPath,
+    required this.fontCharWidth,
+    required this.fontCharHeight,
     required this.cols,
     required this.contrast,
     required this.help,
@@ -107,6 +117,8 @@ class _Options {
   final String imagePath;
   final String outputPath;
   final String fontPath;
+  final int fontCharWidth;
+  final int fontCharHeight;
   final int cols;
   final double contrast;
   final bool help;
@@ -115,6 +127,8 @@ class _Options {
     var imagePath = 'input.jpg';
     var outputPath = 'output.txt';
     var fontPath = 'assets/font/iosevka.png';
+    var fontCharWidth = 1;
+    var fontCharHeight = 2;
     var cols = 240;
     var contrast = 1.0;
     var help = false;
@@ -131,6 +145,9 @@ class _Options {
           outputPath = _valueToStr(args, ++i, arg);
         case '--font':
           fontPath = _valueToStr(args, ++i, arg);
+        case '--char_ratio':
+          fontCharWidth = _valueToInt(args, ++i, arg);
+          fontCharHeight = _valueToInt(args, ++i, arg);
         case '--cols':
           cols = _valueToInt(args, ++i, arg);
         case '--contrast':
@@ -156,6 +173,8 @@ class _Options {
       imagePath: imagePath,
       outputPath: outputPath,
       fontPath: fontPath,
+      fontCharWidth: fontCharWidth,
+      fontCharHeight: fontCharHeight,
       cols: cols,
       contrast: contrast,
       help: help,
