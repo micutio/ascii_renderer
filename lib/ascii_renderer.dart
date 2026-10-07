@@ -1,11 +1,15 @@
 import 'dart:math';
+import 'dart:typed_data';
 
+import 'package:ascii_renderer/src/kd_tree.dart';
+import 'package:ascii_renderer/src/quantized_cache.dart';
 import 'package:image/image.dart' as img;
 
 import 'src/character_shape.dart';
 import 'src/vector6.dart';
 
 // TODO: Add option to choose between standard ASCII, extended ASCII and Cp437.
+// TODO: Adjust caching strategies depending on charset size.
 
 /// Render a given image to ascii text.
 class AsciiRenderer {
@@ -28,14 +32,18 @@ class AsciiRenderer {
   final List<CharacterShape> _characterShapes = [];
   final List<double> _maxVectorVals = List.filled(6, 0.0);
 
+  //final Map<int, String> _lookupCache = {};
   /// The Cache: Maps a quantized 6D shape directly to a character
-  final Map<int, String> _lookupCache = {};
+  late final KdTree6D<CharacterShape> _kdTree;
+  final Quantized6DCache<CharacterShape> _cache =
+      Quantized6DCache<CharacterShape>();
 
   /// Initialise the ASCII renderer with the default font, Arial.
   void initializeFromDefault() {
     _initCharacterShapesFromDefault();
-    _normaliseCharacterValues();
-    _lookupCache.clear();
+    //_normaliseCharacterValues();
+    //_lookupCache.clear();
+    _cache.clear();
   }
 
   /// Initialise the ASCII renderer with a front passed as image,
@@ -46,8 +54,9 @@ class AsciiRenderer {
     int charHeight,
   ) {
     _initCharacterShapesFromImg(fontSheetImg, charWidth, charHeight);
-    _normaliseCharacterValues();
-    _lookupCache.clear();
+    //_normaliseCharacterValues();
+    //_lookupCache.clear();
+    _cache.clear();
   }
 
   /// Creates a list of character shapes from the default font, Arial
@@ -58,6 +67,7 @@ class AsciiRenderer {
 
     // Use a built-in bitmap font from the image package
     final font = img.arial24;
+    final List<MapEntry<Vector6, CharacterShape>> characterShapes = [];
 
     for (int i = 0; i < charset.length; i++) {
       String c = charset[i];
@@ -77,8 +87,10 @@ class AsciiRenderer {
       );
 
       Vector6 v = _sampleCell6D(bmp, 0, 0, cellWidth, cellHeight);
-      _characterShapes.add(CharacterShape(c, v));
+      characterShapes.add(MapEntry(v, CharacterShape(c, v)));
     }
+    _normaliseCharacterValues(characterShapes);
+    _kdTree = KdTree6D(characterShapes);
   }
 
   /// Creates a list of character shapes from the custom font passed
@@ -91,6 +103,7 @@ class AsciiRenderer {
     // Most CP437 sheets are 16x16 characters.
     int charWidth = fontSheet.width ~/ 16;
     int charHeight = fontSheet.height ~/ 16;
+    final List<MapEntry<Vector6, CharacterShape>> characterShapes = [];
 
     for (int i = 0; i < 256; i++) {
       int col = i % 16;
@@ -117,20 +130,24 @@ class AsciiRenderer {
         charWidth,
         charHeight,
       );
-      _characterShapes.add(CharacterShape(charMapping, vec));
+      characterShapes.add(MapEntry(vec, CharacterShape(charMapping, vec)));
     }
+    _normaliseCharacterValues(characterShapes);
+    _kdTree = KdTree6D(characterShapes);
   }
 
   /// Normalise character light value vectors.
-  void _normaliseCharacterValues() {
+  void _normaliseCharacterValues(
+    List<MapEntry<Vector6, CharacterShape>> characterShapes,
+  ) {
     for (int i = 0; i < 6; i++) {
-      _maxVectorVals[i] = _characterShapes
-          .map((cs) => cs.shapeVector[i])
+      _maxVectorVals[i] = characterShapes
+          .map((cs) => cs.value.shapeVector[i])
           .reduce(max);
     }
 
-    for (var cs in _characterShapes) {
-      Vector6 v = cs.shapeVector;
+    for (var cs in characterShapes) {
+      Vector6 v = cs.value.shapeVector;
       for (int i = 0; i < 6; i++) {
         v[i] = _maxVectorVals[i] > 0 ? v[i] / _maxVectorVals[i] : 0.0;
       }
@@ -184,6 +201,9 @@ class AsciiRenderer {
   // --- Caching Implementation ---
 
   String _findBestCharacterCached(Vector6 target) {
+    return _cache.getOrFind(target, _kdTree.findNearest).character;
+
+    /*
     int key = _generateCacheKey(target);
 
     if (_lookupCache.containsKey(key)) {
@@ -203,6 +223,7 @@ class AsciiRenderer {
 
     _lookupCache[key] = bestChar;
     return bestChar;
+    */
   }
 
   int _generateCacheKey(Vector6 v) {
@@ -339,15 +360,45 @@ class AsciiRenderer {
 
   /// Computes the average lightness for [bmp] in a rectangular zone delimited
   /// by the given coordinates.
-  double _averageLightness(img.Image bmp, int x, int y, int w, int h) {
+  double _averageLightness(
+    img.Image bmp,
+    int startX,
+    int startY,
+    int regionWidth,
+    int regionHeight,
+  ) {
     double total = 0;
     int count = 0;
 
-    for (int cy = y; cy < y + h && cy < bmp.height; cy++) {
-      for (int cx = x; cx < x + w && cx < bmp.width; cx++) {
-        img.Pixel pixel = bmp.getPixel(cx, cy);
-        total +=
-            (0.2126 * pixel.r + 0.7152 * pixel.g + 0.0722 * pixel.b) / 255.0;
+    // Buffer view onto pixels
+    final Uint8List pixelBuffer = bmp.toUint8List();
+
+    // Pre-calculate strides (4 bytes per pixel for RGBA)
+    final int pixelStride = bmp.numChannels;
+    final int imgWidth = bmp.width;
+    final int rowStride = imgWidth * pixelStride;
+
+    // Ensure boundaries
+    final int endY = (startY + regionHeight).clamp(0, bmp.height);
+    final int endX = (startX + regionWidth).clamp(0, imgWidth);
+
+    // Loop
+    for (int y = startY; y < endY; y++) {
+      // Starting index of current row
+      final int rowOffset = y * rowStride;
+
+      for (int x = startX; x < endX; x++) {
+        final int i = rowOffset + (x * pixelStride);
+
+        // Check to prevent crash in case of unexpected format
+        if (i + 2 >= pixelBuffer.length) break;
+
+        // Access channels
+        final int r = pixelBuffer[i];
+        // In case of monochrome images, copy R (luminance) to G and B.
+        final int g = (pixelStride > 1) ? pixelBuffer[i + 1] : r;
+        final int b = (pixelStride > 2) ? pixelBuffer[i + 2] : r;
+        total += (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255.0;
         count++;
       }
     }
