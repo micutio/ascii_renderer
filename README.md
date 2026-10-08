@@ -23,8 +23,6 @@ dart run bin/ascii_renderer.dart --input input.jpg --output output.txt --columns
 - [x] Generate native executable.
 - [x] Add command line flags to provide input and output paths at runtime.
 - [ ] Add command line flags to customize ASCII character sets to use: basic, extended, cp437.
-- [ ] Add command line flags to allow inverting color/lightness
 - [ ] Decide whether to add color output
 - [ ] Check out Dart argument parsing libraries to use
 - [ ] Option for no file output
-- [ ] Option to invert values/colors

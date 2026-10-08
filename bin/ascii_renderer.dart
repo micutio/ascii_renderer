@@ -6,7 +6,6 @@ import 'package:image/image.dart' as img;
 
 import 'src/option.dart';
 
-// TODO: Explore other ways of argument parsing.
 const _usage = '''
 Render an image as ASCII art.
 
@@ -19,6 +18,7 @@ Options:
   --char_ratio <w> <h> Width by height ratio of the font characters. Defaults to 1x2.
   --cols <value>       Target number of columns per image. Defaults to 240.
   --contrast <value>   Target contrast, 1.0 is normal, >1.0 = sharper edges.
+  --charset <value>    Character set to choose from. Possible values: ascii, extended, cp437. Defaults to ascii.
   -h, --help           Show this help.
 ''';
 
