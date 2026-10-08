@@ -102,6 +102,8 @@ void main(List<String> args) {
   );
 }
 
+// TODO: Extract options into separate class.
+
 class _Options {
   const _Options({
     required this.imagePath,
