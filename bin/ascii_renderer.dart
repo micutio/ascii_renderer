@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:ascii_renderer/ascii_renderer.dart';
+import 'package:ascii_renderer/src/charset_range.dart';
 import 'package:image/image.dart' as img;
 
 import 'src/option.dart';
@@ -61,11 +62,11 @@ void main(List<String> args) {
     return;
   }
 
-  stdout.writeln(
-    'Font character ratio: ${options.fontCharWidth} by ${options.fontCharHeight}',
-  );
+  final CharsetRange charsetRange = options.charset.getRange();
+
   renderer.initializeFromFontSheet(
     fontSheet,
+    charsetRange,
     options.fontCharWidth,
     options.fontCharHeight,
   );

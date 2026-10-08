@@ -1,13 +1,11 @@
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:ascii_renderer/src/charset_range.dart';
 import 'package:image/image.dart' as img;
 
 import 'src/character_shape.dart';
 import 'src/vector6.dart';
-
-// TODO: Add option to choose between standard ASCII, extended ASCII and Cp437.
-// TODO: Adjust caching strategies depending on charset size.
 
 /// Render a given image to ascii text.
 class AsciiRenderer {
@@ -34,8 +32,8 @@ class AsciiRenderer {
   final Map<int, String> _lookupCache = {};
 
   /// Initialise the ASCII renderer with the default font, Arial.
-  void initializeFromDefault() {
-    _initCharacterShapesFromDefault();
+  void initializeFromDefault(CharsetRange charsetRange) {
+    _initCharacterShapesFromDefault(charsetRange);
     _normaliseCharacterValues();
     _lookupCache.clear();
   }
@@ -44,24 +42,30 @@ class AsciiRenderer {
   /// in form of raw bytes.
   void initializeFromFontSheet(
     img.Image fontSheetImg,
+    CharsetRange charsetRange,
     int charWidth,
     int charHeight,
   ) {
-    _initCharacterShapesFromImg(fontSheetImg, charWidth, charHeight);
+    _initCharacterShapesFromImg(
+      fontSheetImg,
+      charsetRange,
+      charWidth,
+      charHeight,
+    );
     _normaliseCharacterValues();
     _lookupCache.clear();
   }
 
   /// Creates a list of character shapes from the default font, Arial
   /// based on the character set [charset].
-  void _initCharacterShapesFromDefault() {
+  void _initCharacterShapesFromDefault(CharsetRange charsetRange) {
     int cellWidth = 12;
     int cellHeight = 24;
 
     // Use a built-in bitmap font from the image package
     final font = img.arial24;
 
-    for (int i = 0; i < charset.length; i++) {
+    for (int i = charsetRange.start; i < charsetRange.end; i++) {
       String c = charset[i];
 
       // Create a small black canvas for the character
@@ -87,6 +91,7 @@ class AsciiRenderer {
   /// as bytes, based on the character set [charset].
   void _initCharacterShapesFromImg(
     img.Image fontSheet,
+    CharsetRange charsetRange,
     int charWidthRatio,
     int charHeightRatio,
   ) {
@@ -94,7 +99,7 @@ class AsciiRenderer {
     int charWidth = fontSheet.width ~/ 16;
     int charHeight = fontSheet.height ~/ 16;
 
-    for (int i = 0; i < 256; i++) {
+    for (int i = charsetRange.start; i < charsetRange.end; i++) {
       int col = i % 16;
       int row = i ~/ 16;
 

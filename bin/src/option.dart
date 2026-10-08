@@ -1,3 +1,29 @@
+import 'package:ascii_renderer/src/charset_range.dart';
+
+enum CharsetOption {
+  ascii,
+  asciiExtended,
+  cp437;
+
+  static CharsetOption? fromString(String label) {
+    return switch (label.toLowerCase()) {
+      'ascii' => CharsetOption.ascii,
+      'ascii_extended' => CharsetOption.asciiExtended,
+      'extended' => CharsetOption.asciiExtended,
+      'cp437' => CharsetOption.cp437,
+      _ => null,
+    };
+  }
+
+  CharsetRange getRange() {
+    return switch (this) {
+      CharsetOption.ascii => CharsetRange(32, 128),
+      CharsetOption.asciiExtended => CharsetRange(32, 256),
+      CharsetOption.cp437 => CharsetRange(0, 256),
+    };
+  }
+}
+
 class Options {
   const Options({
     required this.imagePath,
@@ -7,6 +33,7 @@ class Options {
     required this.fontCharHeight,
     required this.cols,
     required this.contrast,
+    required this.charset,
     required this.help,
   });
 
@@ -17,6 +44,7 @@ class Options {
   final int fontCharHeight;
   final int cols;
   final double contrast;
+  final CharsetOption charset;
   final bool help;
 
   static Options parse(List<String> args) {
@@ -27,6 +55,7 @@ class Options {
     var fontCharHeight = 2;
     var cols = 240;
     var contrast = 1.0;
+    var charset = CharsetOption.ascii;
     var help = false;
 
     for (var i = 0; i < args.length; i++) {
@@ -48,20 +77,15 @@ class Options {
           cols = _valueToInt(args, ++i, arg);
         case '--contrast':
           contrast = _valueToDouble(args, ++i, arg);
-        default:
-          if (arg.startsWith('--input=')) {
-            imagePath = arg.substring('--input='.length);
-          } else if (arg.startsWith('--output=')) {
-            outputPath = arg.substring('--output='.length);
-          } else if (arg.startsWith('--font=')) {
-            fontPath = arg.substring('--font='.length);
-          } else if (arg.startsWith('--cols=')) {
-            cols = int.parse(arg.substring('--cols'.length));
-          } else if (arg.startsWith('--contrast=')) {
-            contrast = double.parse(arg.substring('--contrast'.length));
-          } else {
-            throw FormatException('Unknown argument: $arg');
+        case '--charset':
+          String charsetOptStr = _valueToStr(args, ++i, arg);
+          CharsetOption? charsetOpt = CharsetOption.fromString(charsetOptStr);
+          if (charsetOpt == null) {
+            throw FormatException('Unknown charset option: $charsetOptStr');
           }
+          charset = charsetOpt;
+        default:
+          throw FormatException('Unknown argument: $arg');
       }
     }
 
@@ -73,6 +97,7 @@ class Options {
       fontCharHeight: fontCharHeight,
       cols: cols,
       contrast: contrast,
+      charset: charset,
       help: help,
     );
   }

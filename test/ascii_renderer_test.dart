@@ -3,13 +3,16 @@ import 'package:ascii_renderer/src/vector6.dart';
 import 'package:image/image.dart' as img;
 import 'package:test/test.dart';
 
+import '../bin/src/option.dart';
+
 void main() {
   group('AsciiRenderer', () {
     late AsciiRenderer renderer;
 
     setUp(() {
       renderer = AsciiRenderer();
-      renderer.initializeFromDefault();
+      CharsetOption charsetOption = CharsetOption.ascii;
+      renderer.initializeFromDefault(charsetOption.getRange());
     });
 
     group('constants', () {
@@ -18,25 +21,25 @@ void main() {
       });
 
       test('charset has 256 characters', () {
-        expect(AsciiRenderer.charset.length, 256);
+        expect(renderer.charset.length, 256);
       });
 
       test('charset starts with space and printable characters', () {
-        expect(AsciiRenderer.charset[0], ' ');
-        expect(AsciiRenderer.charset[32], ' ');
-        expect(AsciiRenderer.charset[33], '!');
+        expect(renderer.charset[0], ' ');
+        expect(renderer.charset[32], ' ');
+        expect(renderer.charset[33], '!');
       });
     });
 
     group('initialize', () {
       test('creates character shapes for all charset characters', () {
         // After initialize, the renderer should have shapes for each char
-        expect(AsciiRenderer.charset.length, 256);
+        expect(renderer.charset.length, 256);
       });
 
       test('initialization completes without error', () {
         final newRenderer = AsciiRenderer();
-        newRenderer.initializeFromDefault();
+        newRenderer.initializeFromDefault(AsciiRenderer.charsetCp437);
         // If we get here without throwing, the test passes
       });
     });
