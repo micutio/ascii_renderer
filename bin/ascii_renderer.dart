@@ -78,10 +78,11 @@ void main(List<String> args) {
     return;
   }
 
-  // Calculate rows to maintain the image's aspect ratio.
-  // Monospace characters are roughly twice as tall as they are wide (1:2 ratio).
+  // Calculate rows to maintain the image's aspect ratio based on the font character ratio.
   final imageAspectRatio = targetImage.width / targetImage.height;
-  final targetRows = ((options.cols / imageAspectRatio) * 0.5).toInt();
+  final fontAspectRatio = options.fontCharWidth / options.fontCharHeight;
+  final targetRows =
+      ((options.cols / imageAspectRatio) * fontAspectRatio).toInt();
 
   stdout.writeln('Rendering ASCII at ${options.cols}x$targetRows...');
   final stopwatch = Stopwatch()..start();
