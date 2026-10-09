@@ -75,10 +75,8 @@ class Options {
         case '--contrast':
           contrast = _valueToDouble(args, ++i, arg);
         case '--charset':
-          final String charsetOptStr = _valueToStr(args, ++i, arg);
-          final CharsetOption? charsetOpt = CharsetOption.tryParse(
-            charsetOptStr,
-          );
+          final charsetOptStr = _valueToStr(args, ++i, arg);
+          final charsetOpt = CharsetOption.tryParse(charsetOptStr);
           if (charsetOpt == null) {
             throw FormatException('Unknown charset option: $charsetOptStr');
           }

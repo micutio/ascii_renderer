@@ -37,7 +37,7 @@ void main(List<String> args) {
     return;
   }
 
-  final File file = File(options.imagePath);
+  final file = File(options.imagePath);
   if (!file.existsSync()) {
     stderr.writeln(
       "Error: Please ensure '${options.imagePath}' exists in the application directory.",
@@ -46,7 +46,7 @@ void main(List<String> args) {
     return;
   }
 
-  final File fontFile = File(options.fontPath);
+  final fontFile = File(options.fontPath);
   if (!fontFile.existsSync()) {
     stderr.writeln("Error: Font bitmap '${options.fontPath}' was not found.");
     exitCode = 1;
@@ -54,14 +54,14 @@ void main(List<String> args) {
   }
 
   stdout.writeln('Initializing renderer (computing 6D shape vectors)...');
-  final AsciiRenderer renderer = AsciiRenderer();
-  final img.Image? fontSheet = img.decodeImage(fontFile.readAsBytesSync());
+  final renderer = AsciiRenderer();
+  final fontSheet = img.decodeImage(fontFile.readAsBytesSync());
   if (fontSheet == null) {
     stdout.writeln("Unable to load image ${options.fontPath}");
     return;
   }
 
-  final CharsetRange charsetRange = options.charset.range;
+  final charsetRange = options.charset.range;
 
   renderer.initializeFromFontSheet(
     fontSheet,
@@ -71,7 +71,7 @@ void main(List<String> args) {
   );
 
   stdout.writeln('Loading image...');
-  final img.Image? targetImage = img.decodeImage(file.readAsBytesSync());
+  final targetImage = img.decodeImage(file.readAsBytesSync());
   if (targetImage == null) {
     stderr.writeln('Failed to decode image.');
     exitCode = 1;
@@ -80,13 +80,13 @@ void main(List<String> args) {
 
   // Calculate rows to maintain the image's aspect ratio.
   // Monospace characters are roughly twice as tall as they are wide (1:2 ratio).
-  final double imageAspectRatio = targetImage.width / targetImage.height;
-  final int targetRows = ((options.cols / imageAspectRatio) * 0.5).toInt();
+  final imageAspectRatio = targetImage.width / targetImage.height;
+  final targetRows = ((options.cols / imageAspectRatio) * 0.5).toInt();
 
   stdout.writeln('Rendering ASCII at ${options.cols}x$targetRows...');
   final stopwatch = Stopwatch()..start();
 
-  final String asciiArt = renderer.render(
+  final asciiArt = renderer.render(
     targetImage,
     options.cols,
     targetRows,
