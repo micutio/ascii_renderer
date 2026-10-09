@@ -28,8 +28,8 @@ int _smoke() {
   try {
     final imagePath = p.join(temp.path, 'pixel.jpg');
     final outputPath = p.join(temp.path, 'out.txt');
-    final pixel = img.Image(width: 1, height: 1);
-    pixel.setPixel(0, 0, img.ColorRgb8(32, 32, 32));
+    final pixel = img.Image(width: 1, height: 1)
+      ..setPixel(0, 0, img.ColorRgb8(32, 32, 32));
     File(imagePath).writeAsBytesSync(img.encodeJpg(pixel));
 
     final font = p.join(

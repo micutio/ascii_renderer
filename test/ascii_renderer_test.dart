@@ -1,28 +1,19 @@
 import 'dart:io';
 
 import 'package:ascii_renderer/ascii_renderer.dart';
-import 'package:ascii_renderer/src/charset_range.dart';
 import 'package:ascii_renderer/src/vector6.dart';
 import 'package:image/image.dart' as img;
 import 'package:test/test.dart';
-
-import '../bin/src/option.dart';
 
 void main() {
   group('AsciiRenderer', () {
     late AsciiRenderer renderer;
 
     setUp(() {
-      renderer = AsciiRenderer();
-      CharsetOption charsetOption = CharsetOption.ascii;
-      renderer.initializeFromDefault(charsetOption.getRange());
+      renderer = AsciiRenderer()..initializeFromDefault(CharsetRange.ascii);
     });
 
     group('constants', () {
-      test('quantizationSteps is 15', () {
-        expect(AsciiRenderer.quantizationSteps, 15);
-      });
-
       test('charset has 256 characters', () {
         expect(AsciiRenderer.charset.length, 256);
       });
@@ -36,8 +27,8 @@ void main() {
 
     group('initializeFromDefault', () {
       test('initializes with ascii charset range', () {
-        final newRenderer = AsciiRenderer();
-        newRenderer.initializeFromDefault(CharsetOption.ascii.getRange());
+        final newRenderer = AsciiRenderer()
+          ..initializeFromDefault(CharsetRange.ascii);
         final image = img.Image(width: 10, height: 10);
         img.fill(image, color: img.ColorRgb8(128, 128, 128));
         final result = newRenderer.render(image, 5, 5, 1.0);
@@ -45,10 +36,8 @@ void main() {
       });
 
       test('initializes with extended charset range', () {
-        final newRenderer = AsciiRenderer();
-        newRenderer.initializeFromDefault(
-          CharsetOption.asciiExtended.getRange(),
-        );
+        final newRenderer = AsciiRenderer()
+          ..initializeFromDefault(CharsetRange.asciiExtended);
         final image = img.Image(width: 10, height: 10);
         img.fill(image, color: img.ColorRgb8(128, 128, 128));
         final result = newRenderer.render(image, 5, 5, 1.0);
@@ -56,26 +45,37 @@ void main() {
       });
 
       test('initializes with cp437 charset range', () {
-        final newRenderer = AsciiRenderer();
-        newRenderer.initializeFromDefault(CharsetOption.cp437.getRange());
+        final newRenderer = AsciiRenderer()
+          ..initializeFromDefault(CharsetRange.cp437);
         final image = img.Image(width: 10, height: 10);
         img.fill(image, color: img.ColorRgb8(128, 128, 128));
         final result = newRenderer.render(image, 5, 5, 1.0);
         expect(result.isNotEmpty, true);
       });
 
+      test('re-initialization clears existing character shapes', () {
+        final reRenderer = AsciiRenderer()
+          ..initializeFromDefault(CharsetRange.ascii)
+          // Initializing again should not crash or accumulate duplicate shapes
+          ..initializeFromDefault(CharsetRange.cp437);
+        final image = img.Image(width: 10, height: 10);
+        img.fill(image, color: img.ColorRgb8(128, 128, 128));
+        final result = reRenderer.render(image, 5, 5, 1.0);
+        expect(result.isNotEmpty, true);
+      });
+
       test(
         'initializes with custom CharsetRange restricted to uppercase letters',
         () {
-          final newRenderer = AsciiRenderer();
-          // Indices 65 ('A') to 91 ('Z' is index 90)
-          newRenderer.initializeFromDefault(CharsetRange(65, 91));
+          final newRenderer = AsciiRenderer()
+            // Indices 65 ('A') to 91 ('Z' is index 90)
+            ..initializeFromDefault(const CharsetRange(65, 91));
           final image = img.Image(width: 10, height: 10);
           img.fill(image, color: img.ColorRgb8(128, 128, 128));
           final result = newRenderer.render(image, 5, 5, 1.0);
           final chars = result.replaceAll('\n', '').replaceAll('\r', '');
           expect(chars.isNotEmpty, true);
-          for (int i = 0; i < chars.length; i++) {
+          for (var i = 0; i < chars.length; i++) {
             final codeUnit = chars.codeUnitAt(i);
             expect(codeUnit >= 65 && codeUnit <= 90, isTrue);
           }
@@ -90,8 +90,8 @@ void main() {
         // Font sheets are 16x16 characters
         testFontSheet = img.Image(width: 160, height: 320);
         img.fill(testFontSheet, color: img.ColorRgb8(0, 0, 0));
-        for (int row = 0; row < 16; row++) {
-          for (int col = 0; col < 16; col++) {
+        for (var row = 0; row < 16; row++) {
+          for (var col = 0; col < 16; col++) {
             img.fillRect(
               testFontSheet,
               x1: col * 10 + 2,
@@ -107,13 +107,8 @@ void main() {
       test(
         'initializes with font sheet where widthRatio < heightRatio (1x2)',
         () {
-          final fontRenderer = AsciiRenderer();
-          fontRenderer.initializeFromFontSheet(
-            testFontSheet,
-            CharsetOption.ascii.getRange(),
-            1,
-            2,
-          );
+          final fontRenderer = AsciiRenderer()
+            ..initializeFromFontSheet(testFontSheet, CharsetRange.ascii, 1, 2);
           final image = img.Image(width: 20, height: 20);
           img.fill(image, color: img.ColorRgb8(128, 128, 128));
           final result = fontRenderer.render(image, 5, 5, 1.0);
@@ -124,13 +119,8 @@ void main() {
       test(
         'initializes with font sheet where widthRatio > heightRatio (2x1)',
         () {
-          final fontRenderer = AsciiRenderer();
-          fontRenderer.initializeFromFontSheet(
-            testFontSheet,
-            CharsetOption.ascii.getRange(),
-            2,
-            1,
-          );
+          final fontRenderer = AsciiRenderer()
+            ..initializeFromFontSheet(testFontSheet, CharsetRange.ascii, 2, 1);
           final image = img.Image(width: 20, height: 20);
           img.fill(image, color: img.ColorRgb8(128, 128, 128));
           final result = fontRenderer.render(image, 5, 5, 1.0);
@@ -141,13 +131,8 @@ void main() {
       test(
         'initializes with font sheet where widthRatio == heightRatio (1x1)',
         () {
-          final fontRenderer = AsciiRenderer();
-          fontRenderer.initializeFromFontSheet(
-            testFontSheet,
-            CharsetOption.ascii.getRange(),
-            1,
-            1,
-          );
+          final fontRenderer = AsciiRenderer()
+            ..initializeFromFontSheet(testFontSheet, CharsetRange.ascii, 1, 1);
           final image = img.Image(width: 20, height: 20);
           img.fill(image, color: img.ColorRgb8(128, 128, 128));
           final result = fontRenderer.render(image, 5, 5, 1.0);
@@ -156,13 +141,8 @@ void main() {
       );
 
       test('initializes with font sheet and cp437 charset range', () {
-        final fontRenderer = AsciiRenderer();
-        fontRenderer.initializeFromFontSheet(
-          testFontSheet,
-          CharsetOption.cp437.getRange(),
-          1,
-          2,
-        );
+        final fontRenderer = AsciiRenderer()
+          ..initializeFromFontSheet(testFontSheet, CharsetRange.cp437, 1, 2);
         final image = img.Image(width: 20, height: 20);
         img.fill(image, color: img.ColorRgb8(128, 128, 128));
         final result = fontRenderer.render(image, 5, 5, 1.0);
@@ -173,13 +153,8 @@ void main() {
         final fontFile = File('assets/font/iosevka.png');
         if (fontFile.existsSync()) {
           final fontImg = img.decodeImage(fontFile.readAsBytesSync())!;
-          final fontRenderer = AsciiRenderer();
-          fontRenderer.initializeFromFontSheet(
-            fontImg,
-            CharsetOption.ascii.getRange(),
-            1,
-            2,
-          );
+          final fontRenderer = AsciiRenderer()
+            ..initializeFromFontSheet(fontImg, CharsetRange.ascii, 1, 2);
           final image = img.Image(width: 20, height: 20);
           img.fill(image, color: img.ColorRgb8(128, 128, 128));
           final result = fontRenderer.render(image, 5, 5, 1.0);
@@ -200,7 +175,7 @@ void main() {
         final lines = result.split('\n').where((l) => l.isNotEmpty).toList();
         expect(lines.length, 10);
         // Each line should have 10 characters
-        for (var line in lines) {
+        for (final line in lines) {
           expect(line.length, 10);
         }
       });
@@ -225,7 +200,7 @@ void main() {
 
         final lines = result.split('\n').where((l) => l.isNotEmpty).toList();
         expect(lines.length, 4);
-        for (var line in lines) {
+        for (final line in lines) {
           expect(line.length, 5);
         }
       });
@@ -285,9 +260,9 @@ void main() {
       });
 
       test('vectors at boundaries quantize correctly', () {
-        final v0 = Vector6()..v0 = 0.0;
-        final v1 = Vector6()..v0 = 1.0;
-        final vMid = Vector6()..v0 = 0.5;
+        final v0 = Vector6.zero()..v0 = 0.0;
+        final v1 = Vector6.zero()..v0 = 1.0;
+        final vMid = Vector6.zero()..v0 = 0.5;
 
         // 0.0 * 15 = 0
         // 1.0 * 15 = 15
@@ -300,8 +275,8 @@ void main() {
 
     group('edge cases', () {
       test('handles single pixel image', () {
-        final image = img.Image(width: 1, height: 1);
-        image.setPixel(0, 0, img.ColorRgb8(255, 255, 255));
+        final image = img.Image(width: 1, height: 1)
+          ..setPixel(0, 0, img.ColorRgb8(255, 255, 255));
 
         final result = renderer.render(image, 1, 1, 1.0);
         // Should produce output (may be single character + newline)
@@ -331,7 +306,7 @@ void main() {
       test('renders gradient image with varied characters', () {
         // Create a gradient from black to white
         final image = img.Image(width: 256, height: 1);
-        for (int x = 0; x < 256; x++) {
+        for (var x = 0; x < 256; x++) {
           image.setPixel(x, 0, img.ColorRgb8(x, x, x));
         }
 

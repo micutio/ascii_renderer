@@ -13,11 +13,55 @@
 
 include: package:lints/recommended.yaml
 
-# Uncomment the following section to specify additional rules.
+analyzer:
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
 
-# linter:
-#   rules:
-#     - camel_case_types
+  errors:
+    missing_required_param: error
+    missing_return: error
+    todo: ignore
+
+linter:
+  rules:
+    # --- Type Safety & Bug Prevention ---
+    - avoid_dynamic_calls
+    - cancel_subscriptions
+    - close_sinks
+    - discarded_futures
+    - unawaited_futures
+    - test_types_in_equals
+    - unrelated_type_equality_checks
+    - no_duplicate_case_values
+    # --- Immutability & Modern Dart ---
+    - prefer_final_locals
+    - prefer_final_fields
+    - prefer_final_in_for_each
+    - unnecessary_final: false
+    - prefer_const_constructors
+    - prefer_const_declarations
+    - prefer_const_literals_to_create_immutables
+    # --- Clean APIs & Code Quality ---
+    - always_declare_return_types
+    - type_annotate_public_apis
+    - omit_local_variable_types
+    - directives_ordering
+    - camel_case_types
+    - avoid_redundant_argument_values
+    - avoid_escaping_inner_quotes
+    - use_super_parameters
+    - cascade_invocations
+    # --- Structure ---
+    - sort_constructors_first
+    - sort_unnamed_constructors_first
+    - sort_pub_dependencies
+    # --- Documentation & Comments ---
+    - comment_references
+    - unintended_html_in_doc_comment
+    - dangling_library_doc_comments
+    - document_ignores
 
 # analyzer:
 #   exclude:

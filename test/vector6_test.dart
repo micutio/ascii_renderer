@@ -4,7 +4,7 @@ import 'package:test/test.dart';
 void main() {
   group('Vector6', () {
     test('default constructor initializes all components to 0', () {
-      final v = Vector6();
+      final v = Vector6.zero();
       expect(v.v0, 0.0);
       expect(v.v1, 0.0);
       expect(v.v2, 0.0);
@@ -13,8 +13,23 @@ void main() {
       expect(v.v5, 0.0);
     });
 
+    test('positional constructor initializes components correctly', () {
+      final v = Vector6(1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
+      expect(v.v0, 1.0);
+      expect(v.v1, 2.0);
+      expect(v.v2, 3.0);
+      expect(v.v3, 4.0);
+      expect(v.v4, 5.0);
+      expect(v.v5, 6.0);
+    });
+
+    test('toString formats all 6 components', () {
+      final v = Vector6(1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
+      expect(v.toString(), 'Vector6(1.0, 2.0, 3.0, 4.0, 5.0, 6.0)');
+    });
+
     test('indexed getter returns correct component values', () {
-      final v = Vector6()
+      final v = Vector6.origin()
         ..v0 = 1.0
         ..v1 = 2.0
         ..v2 = 3.0
@@ -31,14 +46,14 @@ void main() {
     });
 
     test('indexed getter returns 0 for out-of-bounds index', () {
-      final v = Vector6();
+      final v = Vector6.origin();
       expect(v[-1], 0.0);
       expect(v[6], 0.0);
       expect(v[100], 0.0);
     });
 
     test('indexed setter updates correct component values', () {
-      final v = Vector6();
+      final v = Vector6.origin();
       v[0] = 10.0;
       v[1] = 20.0;
       v[2] = 30.0;
@@ -55,7 +70,7 @@ void main() {
     });
 
     test('indexed setter does nothing for out-of-bounds index', () {
-      final v = Vector6()..v0 = 5.0;
+      final v = Vector6.origin()..v0 = 5.0;
       v[-1] = 100.0;
       v[6] = 200.0;
       expect(v.v0, 5.0); // Should remain unchanged
@@ -63,11 +78,11 @@ void main() {
 
     group('distanceSquared', () {
       test('returns 0 for identical vectors', () {
-        final v1 = Vector6()
+        final v1 = Vector6.origin()
           ..v0 = 1.0
           ..v1 = 2.0
           ..v2 = 3.0;
-        final v2 = Vector6()
+        final v2 = Vector6.origin()
           ..v0 = 1.0
           ..v1 = 2.0
           ..v2 = 3.0;
@@ -76,14 +91,14 @@ void main() {
       });
 
       test('calculates correct squared Euclidean distance', () {
-        final v1 = Vector6()
+        final v1 = Vector6.origin()
           ..v0 = 0.0
           ..v1 = 0.0
           ..v2 = 0.0
           ..v3 = 0.0
           ..v4 = 0.0
           ..v5 = 0.0;
-        final v2 = Vector6()
+        final v2 = Vector6.origin()
           ..v0 = 3.0
           ..v1 = 4.0
           ..v2 = 0.0
@@ -96,14 +111,14 @@ void main() {
       });
 
       test('is symmetric (distance from A to B equals B to A)', () {
-        final v1 = Vector6()
+        final v1 = Vector6.origin()
           ..v0 = 1.0
           ..v1 = 2.0
           ..v2 = 3.0
           ..v3 = 4.0
           ..v4 = 5.0
           ..v5 = 6.0;
-        final v2 = Vector6()
+        final v2 = Vector6.origin()
           ..v0 = 4.0
           ..v1 = 3.0
           ..v2 = 2.0
@@ -115,22 +130,22 @@ void main() {
       });
 
       test('handles negative component differences', () {
-        final v1 = Vector6()..v0 = -3.0;
-        final v2 = Vector6()..v0 = 3.0;
+        final v1 = Vector6.origin()..v0 = -3.0;
+        final v2 = Vector6.origin()..v0 = 3.0;
 
         // (-3 - 3)^2 = (-6)^2 = 36
         expect(v1.distanceSquared(v2), 36.0);
       });
 
       test('returns large value when comparing to zero vector', () {
-        final v1 = Vector6()
+        final v1 = Vector6.origin()
           ..v0 = 100.0
           ..v1 = 100.0
           ..v2 = 100.0
           ..v3 = 100.0
           ..v4 = 100.0
           ..v5 = 100.0;
-        final v2 = Vector6();
+        final v2 = Vector6.origin();
 
         // 6 * 100^2 = 60000
         expect(v1.distanceSquared(v2), 60000.0);

@@ -1,44 +1,29 @@
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:ascii_renderer/ascii_renderer.dart';
-import 'package:ascii_renderer/src/charset_range.dart';
 import 'package:image/image.dart' as img;
 
 import 'src/option.dart';
-
-const _usage = '''
-Render an image as ASCII art.
-
-Usage: ascii_renderer [options]
-
-Options:
-  --input <path>       Image to render. Defaults to input.jpg.
-  --output <path>      File to write. Defaults to output.txt.
-  --font <path>        Font bitmap. Defaults to assets/font/iosevka.png.
-  --char_ratio <w> <h> Width by height ratio of the font characters. Defaults to 1x2.
-  --cols <value>       Target number of columns per image. Defaults to 240.
-  --contrast <value>   Target contrast, 1.0 is normal, >1.0 = sharper edges.
-  --charset <value>    Character set to choose from. Possible values: ascii, extended, cp437. Defaults to ascii.
-  -h, --help           Show this help.
-''';
 
 void main(List<String> args) {
   final Options options;
   try {
     options = Options.parse(args);
   } on FormatException catch (error) {
-    stderr.writeln(error.message);
-    stderr.writeln(_usage);
+    stderr
+      ..writeln(error.message)
+      ..writeln(Options.usage);
     exitCode = 64;
     return;
   }
 
   if (options.help) {
-    stdout.write(_usage);
+    stdout.write(Options.usage);
     return;
   }
 
-  final File file = File(options.imagePath);
+  final file = File(options.imagePath);
   if (!file.existsSync()) {
     stderr.writeln(
       "Error: Please ensure '${options.imagePath}' exists in the application directory.",
@@ -47,7 +32,7 @@ void main(List<String> args) {
     return;
   }
 
-  final File fontFile = File(options.fontPath);
+  final fontFile = File(options.fontPath);
   if (!fontFile.existsSync()) {
     stderr.writeln("Error: Font bitmap '${options.fontPath}' was not found.");
     exitCode = 1;
@@ -55,14 +40,17 @@ void main(List<String> args) {
   }
 
   stdout.writeln('Initializing renderer (computing 6D shape vectors)...');
-  final AsciiRenderer renderer = AsciiRenderer();
-  img.Image? fontSheet = img.decodeImage(fontFile.readAsBytesSync());
+  final renderer = AsciiRenderer();
+  final fontSheet = img.decodeImage(fontFile.readAsBytesSync());
   if (fontSheet == null) {
-    stdout.writeln("Unable to load image ${options.fontPath}");
+    stderr.writeln(
+      "Error: Failed to decode font bitmap '${options.fontPath}'.",
+    );
+    exitCode = 1;
     return;
   }
 
-  final CharsetRange charsetRange = options.charset.getRange();
+  final charsetRange = options.charset.range;
 
   renderer.initializeFromFontSheet(
     fontSheet,
@@ -72,22 +60,25 @@ void main(List<String> args) {
   );
 
   stdout.writeln('Loading image...');
-  final img.Image? targetImage = img.decodeImage(file.readAsBytesSync());
+  final targetImage = img.decodeImage(file.readAsBytesSync());
   if (targetImage == null) {
     stderr.writeln('Failed to decode image.');
     exitCode = 1;
     return;
   }
 
-  // Calculate rows to maintain the image's aspect ratio.
-  // Monospace characters are roughly twice as tall as they are wide (1:2 ratio).
-  final double imageAspectRatio = targetImage.width / targetImage.height;
-  final int targetRows = ((options.cols / imageAspectRatio) * 0.5).toInt();
+  // Calculate rows to maintain the image's aspect ratio based on the font character ratio.
+  final imageAspectRatio = targetImage.width / targetImage.height;
+  final fontAspectRatio = options.fontCharWidth / options.fontCharHeight;
+  final targetRows = math.max(
+    1,
+    ((options.cols / imageAspectRatio) * fontAspectRatio).toInt(),
+  );
 
   stdout.writeln('Rendering ASCII at ${options.cols}x$targetRows...');
   final stopwatch = Stopwatch()..start();
 
-  final String asciiArt = renderer.render(
+  final asciiArt = renderer.render(
     targetImage,
     options.cols,
     targetRows,
@@ -95,8 +86,9 @@ void main(List<String> args) {
   );
 
   stopwatch.stop();
-  stdout.writeln(asciiArt);
-  stdout.writeln('Render completed in ${stopwatch.elapsedMilliseconds} ms.');
+  stdout
+    ..writeln(asciiArt)
+    ..writeln('Render completed in ${stopwatch.elapsedMilliseconds} ms.');
 
   File(options.outputPath).writeAsStringSync(asciiArt);
   stdout.writeln(

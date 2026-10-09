@@ -5,7 +5,7 @@ import 'package:test/test.dart';
 void main() {
   group('CharacterShape', () {
     test('stores character and shapeVector correctly', () {
-      final vector = Vector6()
+      final vector = Vector6.origin()
         ..v0 = 1.0
         ..v1 = 2.0
         ..v2 = 3.0;
@@ -15,16 +15,8 @@ void main() {
       expect(shape.shapeVector, vector);
     });
 
-    test('allows modification of character', () {
-      final vector = Vector6();
-      final shape = CharacterShape('A', vector);
-
-      shape.character = 'B';
-      expect(shape.character, 'B');
-    });
-
     test('allows modification of shapeVector components', () {
-      final vector = Vector6();
+      final vector = Vector6.origin();
       final shape = CharacterShape('A', vector);
 
       shape.shapeVector.v0 = 5.0;
@@ -35,22 +27,19 @@ void main() {
     });
 
     test('handles special characters', () {
-      final vector = Vector6();
-      final shape = CharacterShape(' ', vector);
-      expect(shape.character, ' ');
-
-      shape.character = '@';
+      final vector = Vector6.origin();
+      final shape = CharacterShape('@', vector);
       expect(shape.character, '@');
     });
 
     test('handles unicode characters', () {
-      final vector = Vector6();
+      final vector = Vector6.origin();
       final shape = CharacterShape('α', vector);
       expect(shape.character, 'α');
     });
 
     test('works with zero vector', () {
-      final vector = Vector6();
+      final vector = Vector6.origin();
       final shape = CharacterShape('X', vector);
 
       expect(shape.shapeVector.v0, 0.0);

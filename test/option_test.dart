@@ -4,60 +4,54 @@ import '../bin/src/option.dart';
 
 void main() {
   group('CharsetOption', () {
-    group('fromString', () {
+    group('tryParse', () {
       test('parses "ascii" case-insensitively', () {
-        expect(CharsetOption.fromString('ascii'), CharsetOption.ascii);
-        expect(CharsetOption.fromString('ASCII'), CharsetOption.ascii);
-        expect(CharsetOption.fromString('Ascii'), CharsetOption.ascii);
+        expect(CharsetOption.tryParse('ascii'), CharsetOption.ascii);
+        expect(CharsetOption.tryParse('ASCII'), CharsetOption.ascii);
+        expect(CharsetOption.tryParse('Ascii'), CharsetOption.ascii);
       });
 
       test('parses "extended" and "ascii_extended"', () {
+        expect(CharsetOption.tryParse('extended'), CharsetOption.asciiExtended);
+        expect(CharsetOption.tryParse('EXTENDED'), CharsetOption.asciiExtended);
         expect(
-          CharsetOption.fromString('extended'),
+          CharsetOption.tryParse('ascii_extended'),
           CharsetOption.asciiExtended,
         );
         expect(
-          CharsetOption.fromString('EXTENDED'),
-          CharsetOption.asciiExtended,
-        );
-        expect(
-          CharsetOption.fromString('ascii_extended'),
-          CharsetOption.asciiExtended,
-        );
-        expect(
-          CharsetOption.fromString('ASCII_EXTENDED'),
+          CharsetOption.tryParse('ASCII_EXTENDED'),
           CharsetOption.asciiExtended,
         );
       });
 
       test('parses "cp437" case-insensitively', () {
-        expect(CharsetOption.fromString('cp437'), CharsetOption.cp437);
-        expect(CharsetOption.fromString('CP437'), CharsetOption.cp437);
+        expect(CharsetOption.tryParse('cp437'), CharsetOption.cp437);
+        expect(CharsetOption.tryParse('CP437'), CharsetOption.cp437);
       });
 
       test('returns null for unknown charset options', () {
-        expect(CharsetOption.fromString(''), isNull);
-        expect(CharsetOption.fromString('unknown'), isNull);
-        expect(CharsetOption.fromString('utf8'), isNull);
-        expect(CharsetOption.fromString('latin1'), isNull);
+        expect(CharsetOption.tryParse(''), isNull);
+        expect(CharsetOption.tryParse('unknown'), isNull);
+        expect(CharsetOption.tryParse('utf8'), isNull);
+        expect(CharsetOption.tryParse('latin1'), isNull);
       });
     });
 
     group('getRange', () {
       test('ascii range is 32 to 128', () {
-        final range = CharsetOption.ascii.getRange();
+        final range = CharsetOption.ascii.range;
         expect(range.start, 32);
         expect(range.end, 128);
       });
 
       test('asciiExtended range is 32 to 256', () {
-        final range = CharsetOption.asciiExtended.getRange();
+        final range = CharsetOption.asciiExtended.range;
         expect(range.start, 32);
         expect(range.end, 256);
       });
 
       test('cp437 range is 0 to 256', () {
-        final range = CharsetOption.cp437.getRange();
+        final range = CharsetOption.cp437.range;
         expect(range.start, 0);
         expect(range.end, 256);
       });
@@ -105,6 +99,32 @@ void main() {
         final options = Options.parse(['--char_ratio', '3', '4']);
         expect(options.fontCharWidth, 3);
         expect(options.fontCharHeight, 4);
+      });
+
+      test('parses --char_ratio with delimiters (1x2, 1:2, 1,2)', () {
+        final optX = Options.parse(['--char_ratio', '3x4']);
+        expect(optX.fontCharWidth, 3);
+        expect(optX.fontCharHeight, 4);
+
+        final optColon = Options.parse(['--char_ratio', '2:5']);
+        expect(optColon.fontCharWidth, 2);
+        expect(optColon.fontCharHeight, 5);
+
+        final optComma = Options.parse(['--char_ratio=1,3']);
+        expect(optComma.fontCharWidth, 1);
+        expect(optComma.fontCharHeight, 3);
+      });
+
+      test('supports Options.fromArgResults', () {
+        final results = Options.parser.parse([
+          '--cols',
+          '100',
+          '--contrast',
+          '2.0',
+        ]);
+        final options = Options.fromArgResults(results);
+        expect(options.cols, 100);
+        expect(options.contrast, 2.0);
       });
 
       test('parses --cols', () {
