@@ -35,6 +35,62 @@ class Options {
     required this.help,
   });
 
+  factory Options.fromArgResults(ArgResults results) {
+    final help = results['help'] as bool;
+    final imagePath = results['input'] as String;
+    final outputPath = results['output'] as String;
+    final fontPath = results['font'] as String;
+
+    final colsStr = results['cols'] as String;
+    final cols = int.tryParse(colsStr);
+    if (cols == null) {
+      throw FormatException('Invalid integer for --cols: $colsStr');
+    }
+
+    final contrastStr = results['contrast'] as String;
+    final contrast = double.tryParse(contrastStr);
+    if (contrast == null) {
+      throw FormatException('Invalid number for --contrast: $contrastStr');
+    }
+
+    final charsetStr = results['charset'] as String;
+    final charset = CharsetOption.tryParse(charsetStr);
+    if (charset == null) {
+      throw FormatException('Unknown charset option: $charsetStr');
+    }
+
+    final charRatioList = results['char_ratio'] as List<String>;
+    if (charRatioList.length != 2) {
+      throw FormatException(
+        'Expected two values for --char_ratio, got ${charRatioList.length}',
+      );
+    }
+    final fontCharWidth = int.tryParse(charRatioList[0]);
+    if (fontCharWidth == null) {
+      throw FormatException(
+        'Invalid integer for --char_ratio width: ${charRatioList[0]}',
+      );
+    }
+    final fontCharHeight = int.tryParse(charRatioList[1]);
+    if (fontCharHeight == null) {
+      throw FormatException(
+        'Invalid integer for --char_ratio height: ${charRatioList[1]}',
+      );
+    }
+
+    return Options(
+      imagePath: imagePath,
+      outputPath: outputPath,
+      fontPath: fontPath,
+      fontCharWidth: fontCharWidth,
+      fontCharHeight: fontCharHeight,
+      cols: cols,
+      contrast: contrast,
+      charset: charset,
+      help: help,
+    );
+  }
+
   final String imagePath;
   final String outputPath;
   final String fontPath;
@@ -99,62 +155,6 @@ Usage: ascii_renderer [options]
 
 ${parser.usage}
 ''';
-
-  factory Options.fromArgResults(ArgResults results) {
-    final help = results['help'] as bool;
-    final imagePath = results['input'] as String;
-    final outputPath = results['output'] as String;
-    final fontPath = results['font'] as String;
-
-    final colsStr = results['cols'] as String;
-    final cols = int.tryParse(colsStr);
-    if (cols == null) {
-      throw FormatException('Invalid integer for --cols: $colsStr');
-    }
-
-    final contrastStr = results['contrast'] as String;
-    final contrast = double.tryParse(contrastStr);
-    if (contrast == null) {
-      throw FormatException('Invalid number for --contrast: $contrastStr');
-    }
-
-    final charsetStr = results['charset'] as String;
-    final charset = CharsetOption.tryParse(charsetStr);
-    if (charset == null) {
-      throw FormatException('Unknown charset option: $charsetStr');
-    }
-
-    final charRatioList = results['char_ratio'] as List<String>;
-    if (charRatioList.length != 2) {
-      throw FormatException(
-        'Expected two values for --char_ratio, got ${charRatioList.length}',
-      );
-    }
-    final fontCharWidth = int.tryParse(charRatioList[0]);
-    if (fontCharWidth == null) {
-      throw FormatException(
-        'Invalid integer for --char_ratio width: ${charRatioList[0]}',
-      );
-    }
-    final fontCharHeight = int.tryParse(charRatioList[1]);
-    if (fontCharHeight == null) {
-      throw FormatException(
-        'Invalid integer for --char_ratio height: ${charRatioList[1]}',
-      );
-    }
-
-    return Options(
-      imagePath: imagePath,
-      outputPath: outputPath,
-      fontPath: fontPath,
-      fontCharWidth: fontCharWidth,
-      fontCharHeight: fontCharHeight,
-      cols: cols,
-      contrast: contrast,
-      charset: charset,
-      help: help,
-    );
-  }
 
   static Options parse(List<String> args) {
     final preprocessed = _preprocessArgs(args);

@@ -1,12 +1,5 @@
 /// Represents a 6-dimensional shape vector
 class Vector6 {
-  double v0;
-  double v1;
-  double v2;
-  double v3;
-  double v4;
-  double v5;
-
   Vector6([
     this.v0 = 0.0,
     this.v1 = 0.0,
@@ -20,6 +13,12 @@ class Vector6 {
 
   @Deprecated('Use Vector6.zero() instead')
   Vector6.origin() : this();
+  double v0;
+  double v1;
+  double v2;
+  double v3;
+  double v4;
+  double v5;
 
   double distanceSquared(Vector6 other) {
     final d0 = v0 - other.v0;
