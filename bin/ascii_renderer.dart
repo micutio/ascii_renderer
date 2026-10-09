@@ -10,8 +10,9 @@ void main(List<String> args) {
   try {
     options = Options.parse(args);
   } on FormatException catch (error) {
-    stderr.writeln(error.message);
-    stderr.writeln(Options.usage);
+    stderr
+      ..writeln(error.message)
+      ..writeln(Options.usage);
     exitCode = 64;
     return;
   }
@@ -82,8 +83,9 @@ void main(List<String> args) {
   );
 
   stopwatch.stop();
-  stdout.writeln(asciiArt);
-  stdout.writeln('Render completed in ${stopwatch.elapsedMilliseconds} ms.');
+  stdout
+    ..writeln(asciiArt)
+    ..writeln('Render completed in ${stopwatch.elapsedMilliseconds} ms.');
 
   File(options.outputPath).writeAsStringSync(asciiArt);
   stdout.writeln(

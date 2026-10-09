@@ -12,12 +12,12 @@ class Vector6 {
   Vector6.origin() : v0 = 0.0, v1 = 0.0, v2 = 0.0, v3 = 0.0, v4 = 0.0, v5 = 0.0;
 
   double distanceSquared(Vector6 other) {
-    final double d0 = v0 - other.v0;
-    final double d1 = v1 - other.v1;
-    final double d2 = v2 - other.v2;
-    final double d3 = v3 - other.v3;
-    final double d4 = v4 - other.v4;
-    final double d5 = v5 - other.v5;
+    final d0 = v0 - other.v0;
+    final d1 = v1 - other.v1;
+    final d2 = v2 - other.v2;
+    final d3 = v3 - other.v3;
+    final d4 = v4 - other.v4;
+    final d5 = v5 - other.v5;
     return d0 * d0 + d1 * d1 + d2 * d2 + d3 * d3 + d4 * d4 + d5 * d5;
   }
 

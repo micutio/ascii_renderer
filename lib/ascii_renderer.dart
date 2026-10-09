@@ -60,17 +60,17 @@ class AsciiRenderer {
   /// Creates a list of character shapes from the default font, Arial
   /// based on the character set [charset].
   void _initCharacterShapesFromDefault(CharsetRange charsetRange) {
-    final int cellWidth = 12;
-    final int cellHeight = 24;
+    const cellWidth = 12;
+    const cellHeight = 24;
 
     // Use a built-in bitmap font from the image package
     final font = img.arial24;
 
-    for (int i = charsetRange.start; i < charsetRange.end; i++) {
-      final String c = charset[i];
+    for (var i = charsetRange.start; i < charsetRange.end; i++) {
+      final c = charset[i];
 
       // Create a small black canvas for the character
-      final img.Image bmp = img.Image(width: cellWidth, height: cellHeight);
+      final bmp = img.Image(width: cellWidth, height: cellHeight);
       img.fill(bmp, color: img.ColorRgb8(0, 0, 0));
 
       // Draw white text
@@ -84,8 +84,8 @@ class AsciiRenderer {
       );
 
       // Buffer view onto pixels
-      final Uint8List pixelBuffer = bmp.toUint8List();
-      final Vector6 v = _sampleCell6D(
+      final pixelBuffer = bmp.toUint8List();
+      final v = _sampleCell6D(
         pixelBuffer,
         bmp.width,
         bmp.height,
@@ -108,15 +108,15 @@ class AsciiRenderer {
     int charHeightRatio,
   ) {
     // Most CP437 sheets are 16x16 characters.
-    final int charWidth = fontSheet.width ~/ 16;
-    final int charHeight = fontSheet.height ~/ 16;
+    final charWidth = fontSheet.width ~/ 16;
+    final charHeight = fontSheet.height ~/ 16;
 
-    for (int i = charsetRange.start; i < charsetRange.end; i++) {
-      final int col = i % 16;
-      final int row = i ~/ 16;
+    for (var i = charsetRange.start; i < charsetRange.end; i++) {
+      final col = i % 16;
+      final row = i ~/ 16;
 
       // Crop the specific character from the grid.
-      final img.Image charBmp = img.copyCrop(
+      final charBmp = img.copyCrop(
         fontSheet,
         x: col * charWidth,
         y: row * charHeight,
@@ -125,11 +125,11 @@ class AsciiRenderer {
       );
 
       // Map the index to the CP437 string character.
-      final String charMapping = charset[i];
+      final charMapping = charset[i];
       // Buffer view onto pixels
-      final Uint8List pixelBuffer = charBmp.toUint8List();
+      final pixelBuffer = charBmp.toUint8List();
       // Vector6 vec = _sampleCell6D(charBmp, 0, 0, charWidth, charHeight);
-      final Vector6 vec = _sampleCell6DWithRatio(
+      final vec = _sampleCell6DWithRatio(
         pixelBuffer,
         charWidthRatio,
         charHeightRatio,
@@ -147,15 +147,15 @@ class AsciiRenderer {
 
   /// Normalise character light value vectors.
   void _normaliseCharacterValues() {
-    for (int i = 0; i < 6; i++) {
+    for (var i = 0; i < 6; i++) {
       _maxVectorVals[i] = _characterShapes
           .map((cs) => cs.shapeVector[i])
           .reduce(max);
     }
 
-    for (var cs in _characterShapes) {
-      final Vector6 v = cs.shapeVector;
-      for (int i = 0; i < 6; i++) {
+    for (final cs in _characterShapes) {
+      final v = cs.shapeVector;
+      for (var i = 0; i < 6; i++) {
         v[i] = _maxVectorVals[i] > 0 ? v[i] / _maxVectorVals[i] : 0.0;
       }
     }
@@ -169,19 +169,19 @@ class AsciiRenderer {
     int rows,
     double contrastExponent,
   ) {
-    int cellWidth = image.width ~/ columns;
-    int cellHeight = image.height ~/ rows;
+    var cellWidth = image.width ~/ columns;
+    var cellHeight = image.height ~/ rows;
 
     if (cellWidth == 0) cellWidth = 1;
     if (cellHeight == 0) cellHeight = 1;
 
-    final StringBuffer sb = StringBuffer();
+    final sb = StringBuffer();
 
     // Buffer view onto pixels
-    final Uint8List pixelBuffer = image.toUint8List();
-    for (int y = 0; y < rows; y++) {
-      for (int x = 0; x < columns; x++) {
-        final Vector6 sample = _sampleCell6D(
+    final pixelBuffer = image.toUint8List();
+    for (var y = 0; y < rows; y++) {
+      for (var x = 0; x < columns; x++) {
+        final sample = _sampleCell6D(
           pixelBuffer,
           image.width,
           image.height,
@@ -192,7 +192,7 @@ class AsciiRenderer {
           cellHeight,
         );
 
-        for (int i = 0; i < 6; i++) {
+        for (var i = 0; i < 6; i++) {
           sample[i] = _maxVectorVals[i] > 0
               ? sample[i] / _maxVectorVals[i]
               : 0.0;
@@ -213,17 +213,17 @@ class AsciiRenderer {
   // --- Caching Implementation ---
 
   String _findBestCharacterCached(Vector6 target) {
-    final int key = _generateCacheKey(target);
+    final key = _generateCacheKey(target);
 
     if (_lookupCache.containsKey(key)) {
       return _lookupCache[key]!;
     }
 
-    String bestChar = ' ';
-    double bestDist = double.maxFinite;
+    var bestChar = ' ';
+    var bestDist = double.maxFinite;
 
-    for (var cs in _characterShapes) {
-      final double dist = cs.shapeVector.distanceSquared(target);
+    for (final cs in _characterShapes) {
+      final dist = cs.shapeVector.distanceSquared(target);
       if (dist < bestDist) {
         bestDist = dist;
         bestChar = cs.character;
@@ -235,10 +235,10 @@ class AsciiRenderer {
   }
 
   int _generateCacheKey(Vector6 v) {
-    int key = 0;
-    for (int i = 0; i < 6; i++) {
+    var key = 0;
+    for (var i = 0; i < 6; i++) {
       // Quantize float (0.0 -> 1.0) to an integer (0 -> 15)
-      final int quantized = (v[i] * _quantizationSteps).round().clamp(
+      final quantized = (v[i] * _quantizationSteps).round().clamp(
         0,
         _quantizationSteps,
       );
@@ -266,17 +266,17 @@ class AsciiRenderer {
     int height,
   ) {
     if (widthRatio < heightRatio) {
-      final double scaledWidth = widthRatio / heightRatio;
-      final int charWidth = (width * scaledWidth).toInt();
-      final int widthOffset = ((1 - scaledWidth) * width) ~/ 2;
+      final scaledWidth = widthRatio / heightRatio;
+      final charWidth = (width * scaledWidth).toInt();
+      final widthOffset = ((1 - scaledWidth) * width) ~/ 2;
       // adapt parameters
       startX = startX + widthOffset;
       width = charWidth;
     }
     if (widthRatio > heightRatio) {
-      final double scaledHeight = heightRatio / widthRatio;
-      final int charHeight = (height * scaledHeight).toInt();
-      final int heightOffset = ((1 - scaledHeight) * height) ~/ 2;
+      final scaledHeight = heightRatio / widthRatio;
+      final charHeight = (height * scaledHeight).toInt();
+      final heightOffset = ((1 - scaledHeight) * height) ~/ 2;
       // adapt parameters
       startY = startY + heightOffset;
       height = charHeight;
@@ -328,12 +328,12 @@ class AsciiRenderer {
       );
     }
 
-    final int halfW = width ~/ 2;
-    final int thirdH = height ~/ 3;
-    final int staggerY = height ~/ 12;
+    final halfW = width ~/ 2;
+    final thirdH = height ~/ 3;
+    final staggerY = height ~/ 12;
 
     // Left Column
-    final double v0 = _averageLightness(
+    final v0 = _averageLightness(
       pixelBuffer,
       imageWidth,
       imageHeight,
@@ -344,7 +344,7 @@ class AsciiRenderer {
       thirdH,
     );
 
-    final double v2 = _averageLightness(
+    final v2 = _averageLightness(
       pixelBuffer,
       imageWidth,
       imageHeight,
@@ -355,7 +355,7 @@ class AsciiRenderer {
       thirdH,
     );
 
-    final double v4 = _averageLightness(
+    final v4 = _averageLightness(
       pixelBuffer,
       imageWidth,
       imageHeight,
@@ -367,7 +367,7 @@ class AsciiRenderer {
     );
 
     // Right Column
-    final double v1 = _averageLightness(
+    final v1 = _averageLightness(
       pixelBuffer,
       imageWidth,
       imageHeight,
@@ -377,7 +377,7 @@ class AsciiRenderer {
       halfW,
       thirdH,
     );
-    final double v3 = _averageLightness(
+    final v3 = _averageLightness(
       pixelBuffer,
       imageWidth,
       imageHeight,
@@ -387,7 +387,7 @@ class AsciiRenderer {
       halfW,
       thirdH,
     );
-    final double v5 = _averageLightness(
+    final v5 = _averageLightness(
       pixelBuffer,
       imageWidth,
       imageHeight,
@@ -414,33 +414,33 @@ class AsciiRenderer {
     int regionHeight,
   ) {
     double total = 0;
-    int count = 0;
+    var count = 0;
 
     // Pre-calculate strides (4 bytes per pixel for RGBA)
-    final int pixelStride = imageChannels;
-    final int imgWidth = imageWidth;
-    final int rowStride = imgWidth * pixelStride;
+    final pixelStride = imageChannels;
+    final imgWidth = imageWidth;
+    final rowStride = imgWidth * pixelStride;
 
     // Ensure boundaries
-    final int endY = (startY + regionHeight).clamp(0, imageHeight);
-    final int endX = (startX + regionWidth).clamp(0, imgWidth);
+    final endY = (startY + regionHeight).clamp(0, imageHeight);
+    final endX = (startX + regionWidth).clamp(0, imgWidth);
 
     // Loop
-    for (int y = startY; y < endY; y++) {
+    for (var y = startY; y < endY; y++) {
       // Starting index of current row
-      final int rowOffset = y * rowStride;
+      final rowOffset = y * rowStride;
 
-      for (int x = startX; x < endX; x++) {
-        final int i = rowOffset + (x * pixelStride);
+      for (var x = startX; x < endX; x++) {
+        final i = rowOffset + (x * pixelStride);
 
         // Check to prevent crash in case of unexpected format
         if (i + 2 >= pixelBuffer.length) break;
 
         // Access channels
-        final int r = pixelBuffer[i];
+        final r = pixelBuffer[i];
         // In case of monochrome images, copy R (luminance) to G and B.
-        final int g = (pixelStride > 1) ? pixelBuffer[i + 1] : r;
-        final int b = (pixelStride > 2) ? pixelBuffer[i + 2] : r;
+        final g = (pixelStride > 1) ? pixelBuffer[i + 1] : r;
+        final b = (pixelStride > 2) ? pixelBuffer[i + 2] : r;
         total += (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255.0;
         count++;
       }

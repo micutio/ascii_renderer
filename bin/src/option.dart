@@ -176,17 +176,23 @@ ${parser.usage}
         if (i + 1 >= args.length || args[i + 1].startsWith('-')) {
           throw FormatException('Missing value for $arg');
         }
-        normalized.add(arg);
-        normalized.add(args[++i]);
+
+        normalized
+          ..add(arg)
+          ..add(args[++i]);
       } else if (arg == '--char_ratio') {
         if (i + 1 >= args.length || args[i + 1].startsWith('-')) {
           throw FormatException('Missing value for $arg');
         }
+
         if (i + 2 >= args.length || args[i + 2].startsWith('-')) {
           throw FormatException('Missing value for $arg');
         }
-        normalized.add('--char_ratio');
-        normalized.add('${args[i + 1]},${args[i + 2]}');
+
+        normalized
+          ..add('--char_ratio')
+          ..add('${args[i + 1]},${args[i + 2]}');
+
         i += 2;
       } else {
         normalized.add(arg);
