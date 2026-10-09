@@ -57,7 +57,8 @@ void main(List<String> args) {
   final renderer = AsciiRenderer();
   final fontSheet = img.decodeImage(fontFile.readAsBytesSync());
   if (fontSheet == null) {
-    stdout.writeln("Unable to load image ${options.fontPath}");
+    stderr.writeln("Error: Failed to decode font bitmap '${options.fontPath}'.");
+    exitCode = 1;
     return;
   }
 
