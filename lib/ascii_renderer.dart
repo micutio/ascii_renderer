@@ -82,7 +82,18 @@ class AsciiRenderer {
         y: -2,
       );
 
-      Vector6 v = _sampleCell6D(bmp, 0, 0, cellWidth, cellHeight);
+      // Buffer view onto pixels
+      final Uint8List pixelBuffer = bmp.toUint8List();
+      Vector6 v = _sampleCell6D(
+        pixelBuffer,
+        bmp.width,
+        bmp.height,
+        bmp.numChannels,
+        0,
+        0,
+        cellWidth,
+        cellHeight,
+      );
       _characterShapes.add(CharacterShape(c, v));
     }
   }
@@ -114,11 +125,16 @@ class AsciiRenderer {
 
       // Map the index to the CP437 string character.
       String charMapping = charset[i];
+      // Buffer view onto pixels
+      final Uint8List pixelBuffer = charBmp.toUint8List();
       // Vector6 vec = _sampleCell6D(charBmp, 0, 0, charWidth, charHeight);
       Vector6 vec = _sampleCell6DWithRatio(
-        charBmp,
+        pixelBuffer,
         charWidthRatio,
         charHeightRatio,
+        charBmp.width,
+        charBmp.height,
+        charBmp.numChannels,
         0,
         0,
         charWidth,
@@ -160,10 +176,15 @@ class AsciiRenderer {
 
     StringBuffer sb = StringBuffer();
 
+    // Buffer view onto pixels
+    final Uint8List pixelBuffer = image.toUint8List();
     for (int y = 0; y < rows; y++) {
       for (int x = 0; x < columns; x++) {
         Vector6 sample = _sampleCell6D(
-          image,
+          pixelBuffer,
+          image.width,
+          image.height,
+          image.numChannels,
           x * cellWidth,
           y * cellHeight,
           cellWidth,
@@ -232,9 +253,12 @@ class AsciiRenderer {
   /// Adapter method for scaling the sampling area to character proportions
   /// before running [_sampleCell6D].
   Vector6 _sampleCell6DWithRatio(
-    img.Image bmp,
+    Uint8List pixelbuffer,
     int widthRatio,
     int heightRatio,
+    int imageWidth,
+    int imageHeight,
+    int imageChannels,
     int startX,
     int startY,
     int width,
@@ -271,21 +295,42 @@ class AsciiRenderer {
       //);
     }
 
-    return _sampleCell6D(bmp, startX, startY, width, height);
+    return _sampleCell6D(
+      pixelbuffer,
+      imageWidth,
+      imageHeight,
+      imageChannels,
+      startX,
+      startY,
+      width,
+      height,
+    );
   }
 
   /// Samples average lightness values for all six zones of the image and stores
   /// them in a vector.
   /// [bmp] is the image of the caracter to be classified.
   Vector6 _sampleCell6D(
-    img.Image bmp,
+    Uint8List pixelBuffer,
+    int imageWidth,
+    int imageHeight,
+    int imageChannels,
     int startX,
     int startY,
     int width,
     int height,
   ) {
     if (width < 2 || height < 3) {
-      final lightness = _averageLightness(bmp, startX, startY, width, height);
+      final lightness = _averageLightness(
+        pixelBuffer,
+        imageWidth,
+        imageHeight,
+        imageChannels,
+        startX,
+        startY,
+        width,
+        height,
+      );
       return Vector6()
         ..v0 = lightness
         ..v1 = lightness
@@ -302,16 +347,31 @@ class AsciiRenderer {
     Vector6 v = Vector6();
 
     // Left Column
-    v.v0 = _averageLightness(bmp, startX, startY + staggerY, halfW, thirdH);
+    v.v0 = _averageLightness(
+      pixelBuffer,
+      imageWidth,
+      imageHeight,
+      imageChannels,
+      startX,
+      startY + staggerY,
+      halfW,
+      thirdH,
+    );
     v.v2 = _averageLightness(
-      bmp,
+      pixelBuffer,
+      imageWidth,
+      imageHeight,
+      imageChannels,
       startX,
       startY + thirdH + staggerY,
       halfW,
       thirdH,
     );
     v.v4 = _averageLightness(
-      bmp,
+      pixelBuffer,
+      imageWidth,
+      imageHeight,
+      imageChannels,
       startX,
       startY + 2 * thirdH + staggerY,
       halfW,
@@ -320,21 +380,30 @@ class AsciiRenderer {
 
     // Right Column
     v.v1 = _averageLightness(
-      bmp,
+      pixelBuffer,
+      imageWidth,
+      imageHeight,
+      imageChannels,
       startX + halfW,
       max(startY - staggerY, startY),
       halfW,
       thirdH,
     );
     v.v3 = _averageLightness(
-      bmp,
+      pixelBuffer,
+      imageWidth,
+      imageHeight,
+      imageChannels,
       startX + halfW,
       startY + thirdH - staggerY,
       halfW,
       thirdH,
     );
     v.v5 = _averageLightness(
-      bmp,
+      pixelBuffer,
+      imageWidth,
+      imageHeight,
+      imageChannels,
       startX + halfW,
       startY + 2 * thirdH - staggerY,
       halfW,
@@ -347,7 +416,10 @@ class AsciiRenderer {
   /// Computes the average lightness for [bmp] in a rectangular zone delimited
   /// by the given coordinates.
   double _averageLightness(
-    img.Image bmp,
+    Uint8List pixelBuffer,
+    int imageWidth,
+    int imageHeight,
+    int imageChannels,
     int startX,
     int startY,
     int regionWidth,
@@ -356,16 +428,13 @@ class AsciiRenderer {
     double total = 0;
     int count = 0;
 
-    // Buffer view onto pixels
-    final Uint8List pixelBuffer = bmp.toUint8List();
-
     // Pre-calculate strides (4 bytes per pixel for RGBA)
-    final int pixelStride = bmp.numChannels;
-    final int imgWidth = bmp.width;
+    final int pixelStride = imageChannels;
+    final int imgWidth = imageWidth;
     final int rowStride = imgWidth * pixelStride;
 
     // Ensure boundaries
-    final int endY = (startY + regionHeight).clamp(0, bmp.height);
+    final int endY = (startY + regionHeight).clamp(0, imageHeight);
     final int endX = (startX + regionWidth).clamp(0, imgWidth);
 
     // Loop
