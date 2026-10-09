@@ -5,35 +5,19 @@ import 'package:image/image.dart' as img;
 
 import 'src/option.dart';
 
-const _usage = '''
-Render an image as ASCII art.
-
-Usage: ascii_renderer [options]
-
-Options:
-  --input <path>       Image to render. Defaults to input.jpg.
-  --output <path>      File to write. Defaults to output.txt.
-  --font <path>        Font bitmap. Defaults to assets/font/iosevka.png.
-  --char_ratio <w> <h> Width by height ratio of the font characters. Defaults to 1x2.
-  --cols <value>       Target number of columns per image. Defaults to 240.
-  --contrast <value>   Target contrast, 1.0 is normal, >1.0 = sharper edges.
-  --charset <value>    Character set to choose from. Possible values: ascii, extended, cp437. Defaults to ascii.
-  -h, --help           Show this help.
-''';
-
 void main(List<String> args) {
   final Options options;
   try {
     options = Options.parse(args);
   } on FormatException catch (error) {
     stderr.writeln(error.message);
-    stderr.writeln(_usage);
+    stderr.writeln(Options.usage);
     exitCode = 64;
     return;
   }
 
   if (options.help) {
-    stdout.write(_usage);
+    stdout.write(Options.usage);
     return;
   }
 
@@ -57,7 +41,9 @@ void main(List<String> args) {
   final renderer = AsciiRenderer();
   final fontSheet = img.decodeImage(fontFile.readAsBytesSync());
   if (fontSheet == null) {
-    stderr.writeln("Error: Failed to decode font bitmap '${options.fontPath}'.");
+    stderr.writeln(
+      "Error: Failed to decode font bitmap '${options.fontPath}'.",
+    );
     exitCode = 1;
     return;
   }
@@ -82,8 +68,8 @@ void main(List<String> args) {
   // Calculate rows to maintain the image's aspect ratio based on the font character ratio.
   final imageAspectRatio = targetImage.width / targetImage.height;
   final fontAspectRatio = options.fontCharWidth / options.fontCharHeight;
-  final targetRows =
-      ((options.cols / imageAspectRatio) * fontAspectRatio).toInt();
+  final targetRows = ((options.cols / imageAspectRatio) * fontAspectRatio)
+      .toInt();
 
   stdout.writeln('Rendering ASCII at ${options.cols}x$targetRows...');
   final stopwatch = Stopwatch()..start();

@@ -1,4 +1,5 @@
-import 'package:ascii_renderer/src/charset_range.dart';
+import 'package:args/args.dart';
+import 'package:ascii_renderer/ascii_renderer.dart';
 
 enum CharsetOption {
   ascii,
@@ -44,46 +45,105 @@ class Options {
   final CharsetOption charset;
   final bool help;
 
-  static Options parse(List<String> args) {
-    var imagePath = 'input.jpg';
-    var outputPath = 'output.txt';
-    var fontPath = 'assets/font/iosevka.png';
-    var fontCharWidth = 1;
-    var fontCharHeight = 2;
-    var cols = 240;
-    var contrast = 1.0;
-    var charset = CharsetOption.ascii;
-    var help = false;
+  static ArgParser get parser => ArgParser()
+    ..addFlag('help', abbr: 'h', negatable: false, help: 'Show this help.')
+    ..addOption(
+      'input',
+      defaultsTo: 'input.jpg',
+      help: 'Image to render.',
+      valueHelp: 'path',
+    )
+    ..addOption(
+      'output',
+      defaultsTo: 'output.txt',
+      help: 'File to write.',
+      valueHelp: 'path',
+    )
+    ..addOption(
+      'font',
+      defaultsTo: 'assets/font/iosevka.png',
+      help: 'Font bitmap.',
+      valueHelp: 'path',
+    )
+    ..addMultiOption(
+      'char_ratio',
+      defaultsTo: ['1', '2'],
+      help: 'Width by height ratio of the font characters.',
+      valueHelp: '<w> <h>',
+    )
+    ..addOption(
+      'cols',
+      defaultsTo: '240',
+      help: 'Target number of columns per image.',
+      valueHelp: 'value',
+    )
+    ..addOption(
+      'contrast',
+      defaultsTo: '1.0',
+      help: 'Target contrast, 1.0 is normal, >1.0 = sharper edges.',
+      valueHelp: 'value',
+    )
+    ..addOption(
+      'charset',
+      defaultsTo: 'ascii',
+      allowed: ['ascii', 'extended', 'ascii_extended', 'cp437'],
+      help: 'Character set to choose from.',
+      valueHelp: 'value',
+    );
 
-    for (var i = 0; i < args.length; i++) {
-      final arg = args[i];
-      switch (arg) {
-        case '-h':
-        case '--help':
-          help = true;
-        case '--input':
-          imagePath = _valueToStr(args, ++i, arg);
-        case '--output':
-          outputPath = _valueToStr(args, ++i, arg);
-        case '--font':
-          fontPath = _valueToStr(args, ++i, arg);
-        case '--char_ratio':
-          fontCharWidth = _valueToInt(args, ++i, arg);
-          fontCharHeight = _valueToInt(args, ++i, arg);
-        case '--cols':
-          cols = _valueToInt(args, ++i, arg);
-        case '--contrast':
-          contrast = _valueToDouble(args, ++i, arg);
-        case '--charset':
-          final charsetOptStr = _valueToStr(args, ++i, arg);
-          final charsetOpt = CharsetOption.tryParse(charsetOptStr);
-          if (charsetOpt == null) {
-            throw FormatException('Unknown charset option: $charsetOptStr');
-          }
-          charset = charsetOpt;
-        default:
-          throw FormatException('Unknown argument: $arg');
-      }
+  static String get usage =>
+      '''
+Render an image as ASCII art.
+
+Usage: ascii_renderer [options]
+
+${parser.usage}
+''';
+
+  static Options parse(List<String> args) {
+    final preprocessed = _preprocessArgs(args);
+    final results = parser.parse(preprocessed);
+
+    final help = results['help'] as bool;
+    final imagePath = results['input'] as String;
+    final outputPath = results['output'] as String;
+    final fontPath = results['font'] as String;
+
+    final colsStr = results['cols'] as String;
+    final cols = int.tryParse(colsStr);
+    if (cols == null) {
+      throw FormatException('Invalid integer for --cols: $colsStr');
+    }
+
+    final contrastStr = results['contrast'] as String;
+    final contrast = double.tryParse(contrastStr);
+    if (contrast == null) {
+      throw FormatException('Invalid number for --contrast: $contrastStr');
+    }
+
+    final charsetStr = results['charset'] as String;
+    final charset = CharsetOption.tryParse(charsetStr);
+    if (charset == null) {
+      throw FormatException('Unknown charset option: $charsetStr');
+    }
+
+    final charRatioList = results['char_ratio'] as List<String>;
+    if (charRatioList.length != 2) {
+      throw FormatException(
+        'Expected two values for --char_ratio, got ${charRatioList.length}',
+      );
+    }
+    final fontCharWidth = int.tryParse(charRatioList[0]);
+    if (fontCharWidth == null) {
+      throw FormatException(
+        'Invalid integer for --char_ratio width: ${charRatioList[0]}',
+      );
+    }
+    final fontCharHeight = int.tryParse(charRatioList[1]);
+    if (fontCharHeight == null) {
+      throw FormatException(
+        'Invalid integer for --char_ratio height: ${charRatioList[1]}',
+      );
     }
 
     return Options(
@@ -99,37 +159,39 @@ class Options {
     );
   }
 
-  /// Parses an argument into a string.
-  ///
-  /// Throws a [FormatException] if the argument is missing or
-  /// not a valid string.
-  static String _valueToStr(List<String> args, int index, String flag) {
-    if (index >= args.length || args[index].startsWith('-')) {
-      throw FormatException('Missing value for $flag');
+  static List<String> _preprocessArgs(List<String> args) {
+    const singleValueOptions = {
+      '--input',
+      '--output',
+      '--font',
+      '--cols',
+      '--contrast',
+      '--charset',
+    };
+
+    final normalized = <String>[];
+    for (var i = 0; i < args.length; i++) {
+      final arg = args[i];
+      if (singleValueOptions.contains(arg)) {
+        if (i + 1 >= args.length || args[i + 1].startsWith('-')) {
+          throw FormatException('Missing value for $arg');
+        }
+        normalized.add(arg);
+        normalized.add(args[++i]);
+      } else if (arg == '--char_ratio') {
+        if (i + 1 >= args.length || args[i + 1].startsWith('-')) {
+          throw FormatException('Missing value for $arg');
+        }
+        if (i + 2 >= args.length || args[i + 2].startsWith('-')) {
+          throw FormatException('Missing value for $arg');
+        }
+        normalized.add('--char_ratio');
+        normalized.add('${args[i + 1]},${args[i + 2]}');
+        i += 2;
+      } else {
+        normalized.add(arg);
+      }
     }
-    return args[index];
-  }
-
-  /// Parses an argument into an integer.
-  ///
-  /// Throws a [FormatException] if the argument is missing or not a valid int.
-  static int _valueToInt(List<String> args, int index, String flag) {
-    if (index >= args.length || args[index].startsWith('-')) {
-      throw FormatException('Missing value for $flag');
-    }
-
-    return int.parse(args[index]);
-  }
-
-  /// Parses an argument into a double.
-  ///
-  /// Throws a [FormatException] if the argument is missing or not a valid
-  /// floating point number.
-  static double _valueToDouble(List<String> args, int index, String flag) {
-    if (index >= args.length || args[index].startsWith('-')) {
-      throw FormatException('Missing value for $flag');
-    }
-
-    return double.parse(args[index]);
+    return normalized;
   }
 }
