@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:ascii_renderer/ascii_renderer.dart';
 import 'package:image/image.dart' as img;
@@ -69,8 +70,10 @@ void main(List<String> args) {
   // Calculate rows to maintain the image's aspect ratio based on the font character ratio.
   final imageAspectRatio = targetImage.width / targetImage.height;
   final fontAspectRatio = options.fontCharWidth / options.fontCharHeight;
-  final targetRows = ((options.cols / imageAspectRatio) * fontAspectRatio)
-      .toInt();
+  final targetRows = math.max(
+    1,
+    ((options.cols / imageAspectRatio) * fontAspectRatio).toInt(),
+  );
 
   stdout.writeln('Rendering ASCII at ${options.cols}x$targetRows...');
   final stopwatch = Stopwatch()..start();

@@ -7,9 +7,19 @@ class Vector6 {
   double v4;
   double v5;
 
-  Vector6(this.v0, this.v1, this.v2, this.v3, this.v4, this.v5);
+  Vector6([
+    this.v0 = 0.0,
+    this.v1 = 0.0,
+    this.v2 = 0.0,
+    this.v3 = 0.0,
+    this.v4 = 0.0,
+    this.v5 = 0.0,
+  ]);
 
-  Vector6.origin() : v0 = 0.0, v1 = 0.0, v2 = 0.0, v3 = 0.0, v4 = 0.0, v5 = 0.0;
+  Vector6.zero() : this();
+
+  @Deprecated('Use Vector6.zero() instead')
+  Vector6.origin() : this();
 
   double distanceSquared(Vector6 other) {
     final d0 = v0 - other.v0;
@@ -21,45 +31,33 @@ class Vector6 {
     return d0 * d0 + d1 * d1 + d2 * d2 + d3 * d3 + d4 * d4 + d5 * d5;
   }
 
-  double operator [](int index) {
-    switch (index) {
-      case 0:
-        return v0;
-      case 1:
-        return v1;
-      case 2:
-        return v2;
-      case 3:
-        return v3;
-      case 4:
-        return v4;
-      case 5:
-        return v5;
-      default:
-        return 0;
-    }
-  }
+  double operator [](int index) => switch (index) {
+    0 => v0,
+    1 => v1,
+    2 => v2,
+    3 => v3,
+    4 => v4,
+    5 => v5,
+    _ => 0.0,
+  };
 
   void operator []=(int index, double value) {
     switch (index) {
       case 0:
         v0 = value;
-        break;
       case 1:
         v1 = value;
-        break;
       case 2:
         v2 = value;
-        break;
       case 3:
         v3 = value;
-        break;
       case 4:
         v4 = value;
-        break;
       case 5:
         v5 = value;
-        break;
     }
   }
+
+  @override
+  String toString() => 'Vector6($v0, $v1, $v2, $v3, $v4, $v5)';
 }

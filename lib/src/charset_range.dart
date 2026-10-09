@@ -15,5 +15,16 @@ class CharsetRange {
   int get length => end - start;
 
   @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CharsetRange &&
+          runtimeType == other.runtimeType &&
+          start == other.start &&
+          end == other.end;
+
+  @override
+  int get hashCode => Object.hash(start, end);
+
+  @override
   String toString() => 'CharsetRange($start, $end)';
 }

@@ -4,13 +4,28 @@ import 'package:test/test.dart';
 void main() {
   group('Vector6', () {
     test('default constructor initializes all components to 0', () {
-      final v = Vector6.origin();
+      final v = Vector6.zero();
       expect(v.v0, 0.0);
       expect(v.v1, 0.0);
       expect(v.v2, 0.0);
       expect(v.v3, 0.0);
       expect(v.v4, 0.0);
       expect(v.v5, 0.0);
+    });
+
+    test('positional constructor initializes components correctly', () {
+      final v = Vector6(1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
+      expect(v.v0, 1.0);
+      expect(v.v1, 2.0);
+      expect(v.v2, 3.0);
+      expect(v.v3, 4.0);
+      expect(v.v4, 5.0);
+      expect(v.v5, 6.0);
+    });
+
+    test('toString formats all 6 components', () {
+      final v = Vector6(1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
+      expect(v.toString(), 'Vector6(1.0, 2.0, 3.0, 4.0, 5.0, 6.0)');
     });
 
     test('indexed getter returns correct component values', () {

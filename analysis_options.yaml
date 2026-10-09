@@ -53,6 +53,15 @@ linter:
     - avoid_escaping_inner_quotes
     - use_super_parameters
     - cascade_invocations
+    # --- Structure ---
+    - sort_constructors_first
+    - sort_unnamed_constructors_first
+    - sort_pub_dependencies
+    # --- Documentation & Comments ---
+    - comment_references
+    - unintended_html_in_doc_comment
+    - dangling_library_doc_comments
+    - document_ignores
 
 # analyzer:
 #   exclude:

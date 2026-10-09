@@ -34,8 +34,9 @@ class AsciiRenderer {
 
   /// Initialise the ASCII renderer with the default font, Arial.
   void initializeFromDefault(CharsetRange charsetRange) {
+    _characterShapes.clear();
     _initCharacterShapesFromDefault(charsetRange);
-    _normaliseCharacterValues();
+    _normalizeCharacterValues();
     _lookupCache.clear();
   }
 
@@ -47,13 +48,14 @@ class AsciiRenderer {
     int charWidth,
     int charHeight,
   ) {
+    _characterShapes.clear();
     _initCharacterShapesFromImg(
       fontSheetImg,
       charsetRange,
       charWidth,
       charHeight,
     );
-    _normaliseCharacterValues();
+    _normalizeCharacterValues();
     _lookupCache.clear();
   }
 
@@ -128,7 +130,6 @@ class AsciiRenderer {
       final charMapping = charset[i];
       // Buffer view onto pixels
       final pixelBuffer = charBmp.toUint8List();
-      // Vector6 vec = _sampleCell6D(charBmp, 0, 0, charWidth, charHeight);
       final vec = _sampleCell6DWithRatio(
         pixelBuffer,
         charWidthRatio,
@@ -145,8 +146,8 @@ class AsciiRenderer {
     }
   }
 
-  /// Normalise character light value vectors.
-  void _normaliseCharacterValues() {
+  /// Normalize character light value vectors.
+  void _normalizeCharacterValues() {
     for (var i = 0; i < 6; i++) {
       _maxVectorVals[i] = _characterShapes
           .map((cs) => cs.shapeVector[i])
@@ -254,7 +255,7 @@ class AsciiRenderer {
   /// Adapter method for scaling the sampling area to character proportions
   /// before running [_sampleCell6D].
   Vector6 _sampleCell6DWithRatio(
-    Uint8List pixelbuffer,
+    Uint8List pixelBuffer,
     int widthRatio,
     int heightRatio,
     int imageWidth,
@@ -283,7 +284,7 @@ class AsciiRenderer {
     }
 
     return _sampleCell6D(
-      pixelbuffer,
+      pixelBuffer,
       imageWidth,
       imageHeight,
       imageChannels,
@@ -296,7 +297,7 @@ class AsciiRenderer {
 
   /// Samples average lightness values for all six zones of the image and stores
   /// them in a vector.
-  /// [bmp] is the image of the character to be classified.
+  /// [pixelBuffer] is the image bytes of the character to be classified.
   Vector6 _sampleCell6D(
     Uint8List pixelBuffer,
     int imageWidth,
@@ -401,7 +402,7 @@ class AsciiRenderer {
     return Vector6(v0, v1, v2, v3, v4, v5);
   }
 
-  /// Computes the average lightness for [bmp] in a rectangular zone delimited
+  /// Computes the average lightness for [pixelBuffer] in a rectangular zone delimited
   /// by the given coordinates.
   double _averageLightness(
     Uint8List pixelBuffer,

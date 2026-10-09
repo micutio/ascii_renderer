@@ -100,10 +100,7 @@ Usage: ascii_renderer [options]
 ${parser.usage}
 ''';
 
-  static Options parse(List<String> args) {
-    final preprocessed = _preprocessArgs(args);
-    final results = parser.parse(preprocessed);
-
+  factory Options.fromArgResults(ArgResults results) {
     final help = results['help'] as bool;
     final imagePath = results['input'] as String;
     final outputPath = results['output'] as String;
@@ -159,6 +156,12 @@ ${parser.usage}
     );
   }
 
+  static Options parse(List<String> args) {
+    final preprocessed = _preprocessArgs(args);
+    final results = parser.parse(preprocessed);
+    return Options.fromArgResults(results);
+  }
+
   static List<String> _preprocessArgs(List<String> args) {
     const singleValueOptions = {
       '--input',
@@ -185,15 +188,31 @@ ${parser.usage}
           throw FormatException('Missing value for $arg');
         }
 
-        if (i + 2 >= args.length || args[i + 2].startsWith('-')) {
-          throw FormatException('Missing value for $arg');
+        final next = args[i + 1];
+        final match = RegExp(r'^(\d+)[x:,](\d+)$').firstMatch(next);
+        if (match != null) {
+          normalized
+            ..add('--char_ratio')
+            ..add('${match.group(1)},${match.group(2)}');
+          i += 1;
+        } else {
+          if (i + 2 >= args.length || args[i + 2].startsWith('-')) {
+            throw FormatException('Missing value for $arg');
+          }
+
+          normalized
+            ..add('--char_ratio')
+            ..add('${args[i + 1]},${args[i + 2]}');
+          i += 2;
         }
-
-        normalized
-          ..add('--char_ratio')
-          ..add('${args[i + 1]},${args[i + 2]}');
-
-        i += 2;
+      } else if (arg.startsWith('--char_ratio=')) {
+        final val = arg.substring('--char_ratio='.length);
+        final match = RegExp(r'^(\d+)[x:,](\d+)$').firstMatch(val);
+        if (match != null) {
+          normalized.add('--char_ratio=${match.group(1)},${match.group(2)}');
+        } else {
+          normalized.add(arg);
+        }
       } else {
         normalized.add(arg);
       }

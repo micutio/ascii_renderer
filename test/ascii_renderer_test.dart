@@ -5,16 +5,12 @@ import 'package:ascii_renderer/src/vector6.dart';
 import 'package:image/image.dart' as img;
 import 'package:test/test.dart';
 
-import '../bin/src/option.dart';
-
 void main() {
   group('AsciiRenderer', () {
     late AsciiRenderer renderer;
 
     setUp(() {
-      renderer = AsciiRenderer();
-      const charsetOption = CharsetOption.ascii;
-      renderer.initializeFromDefault(charsetOption.range);
+      renderer = AsciiRenderer()..initializeFromDefault(CharsetRange.ascii);
     });
 
     group('constants', () {
@@ -32,7 +28,7 @@ void main() {
     group('initializeFromDefault', () {
       test('initializes with ascii charset range', () {
         final newRenderer = AsciiRenderer()
-          ..initializeFromDefault(CharsetOption.ascii.range);
+          ..initializeFromDefault(CharsetRange.ascii);
         final image = img.Image(width: 10, height: 10);
         img.fill(image, color: img.ColorRgb8(128, 128, 128));
         final result = newRenderer.render(image, 5, 5, 1.0);
@@ -41,7 +37,7 @@ void main() {
 
       test('initializes with extended charset range', () {
         final newRenderer = AsciiRenderer()
-          ..initializeFromDefault(CharsetOption.asciiExtended.range);
+          ..initializeFromDefault(CharsetRange.asciiExtended);
         final image = img.Image(width: 10, height: 10);
         img.fill(image, color: img.ColorRgb8(128, 128, 128));
         final result = newRenderer.render(image, 5, 5, 1.0);
@@ -50,10 +46,21 @@ void main() {
 
       test('initializes with cp437 charset range', () {
         final newRenderer = AsciiRenderer()
-          ..initializeFromDefault(CharsetOption.cp437.range);
+          ..initializeFromDefault(CharsetRange.cp437);
         final image = img.Image(width: 10, height: 10);
         img.fill(image, color: img.ColorRgb8(128, 128, 128));
         final result = newRenderer.render(image, 5, 5, 1.0);
+        expect(result.isNotEmpty, true);
+      });
+
+      test('re-initialization clears existing character shapes', () {
+        final reRenderer = AsciiRenderer()
+          ..initializeFromDefault(CharsetRange.ascii)
+          // Initializing again should not crash or accumulate duplicate shapes
+          ..initializeFromDefault(CharsetRange.cp437);
+        final image = img.Image(width: 10, height: 10);
+        img.fill(image, color: img.ColorRgb8(128, 128, 128));
+        final result = reRenderer.render(image, 5, 5, 1.0);
         expect(result.isNotEmpty, true);
       });
 
@@ -101,12 +108,7 @@ void main() {
         'initializes with font sheet where widthRatio < heightRatio (1x2)',
         () {
           final fontRenderer = AsciiRenderer()
-            ..initializeFromFontSheet(
-              testFontSheet,
-              CharsetOption.ascii.range,
-              1,
-              2,
-            );
+            ..initializeFromFontSheet(testFontSheet, CharsetRange.ascii, 1, 2);
           final image = img.Image(width: 20, height: 20);
           img.fill(image, color: img.ColorRgb8(128, 128, 128));
           final result = fontRenderer.render(image, 5, 5, 1.0);
@@ -118,12 +120,7 @@ void main() {
         'initializes with font sheet where widthRatio > heightRatio (2x1)',
         () {
           final fontRenderer = AsciiRenderer()
-            ..initializeFromFontSheet(
-              testFontSheet,
-              CharsetOption.ascii.range,
-              2,
-              1,
-            );
+            ..initializeFromFontSheet(testFontSheet, CharsetRange.ascii, 2, 1);
           final image = img.Image(width: 20, height: 20);
           img.fill(image, color: img.ColorRgb8(128, 128, 128));
           final result = fontRenderer.render(image, 5, 5, 1.0);
@@ -135,12 +132,7 @@ void main() {
         'initializes with font sheet where widthRatio == heightRatio (1x1)',
         () {
           final fontRenderer = AsciiRenderer()
-            ..initializeFromFontSheet(
-              testFontSheet,
-              CharsetOption.ascii.range,
-              1,
-              1,
-            );
+            ..initializeFromFontSheet(testFontSheet, CharsetRange.ascii, 1, 1);
           final image = img.Image(width: 20, height: 20);
           img.fill(image, color: img.ColorRgb8(128, 128, 128));
           final result = fontRenderer.render(image, 5, 5, 1.0);
@@ -150,12 +142,7 @@ void main() {
 
       test('initializes with font sheet and cp437 charset range', () {
         final fontRenderer = AsciiRenderer()
-          ..initializeFromFontSheet(
-            testFontSheet,
-            CharsetOption.cp437.range,
-            1,
-            2,
-          );
+          ..initializeFromFontSheet(testFontSheet, CharsetRange.cp437, 1, 2);
         final image = img.Image(width: 20, height: 20);
         img.fill(image, color: img.ColorRgb8(128, 128, 128));
         final result = fontRenderer.render(image, 5, 5, 1.0);
@@ -167,7 +154,7 @@ void main() {
         if (fontFile.existsSync()) {
           final fontImg = img.decodeImage(fontFile.readAsBytesSync())!;
           final fontRenderer = AsciiRenderer()
-            ..initializeFromFontSheet(fontImg, CharsetOption.ascii.range, 1, 2);
+            ..initializeFromFontSheet(fontImg, CharsetRange.ascii, 1, 2);
           final image = img.Image(width: 20, height: 20);
           img.fill(image, color: img.ColorRgb8(128, 128, 128));
           final result = fontRenderer.render(image, 5, 5, 1.0);
@@ -273,9 +260,9 @@ void main() {
       });
 
       test('vectors at boundaries quantize correctly', () {
-        final v0 = Vector6.origin()..v0 = 0.0;
-        final v1 = Vector6.origin()..v0 = 1.0;
-        final vMid = Vector6.origin()..v0 = 0.5;
+        final v0 = Vector6.zero()..v0 = 0.0;
+        final v1 = Vector6.zero()..v0 = 1.0;
+        final vMid = Vector6.zero()..v0 = 0.5;
 
         // 0.0 * 15 = 0
         // 1.0 * 15 = 15

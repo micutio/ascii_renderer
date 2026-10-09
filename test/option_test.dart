@@ -101,6 +101,32 @@ void main() {
         expect(options.fontCharHeight, 4);
       });
 
+      test('parses --char_ratio with delimiters (1x2, 1:2, 1,2)', () {
+        final optX = Options.parse(['--char_ratio', '3x4']);
+        expect(optX.fontCharWidth, 3);
+        expect(optX.fontCharHeight, 4);
+
+        final optColon = Options.parse(['--char_ratio', '2:5']);
+        expect(optColon.fontCharWidth, 2);
+        expect(optColon.fontCharHeight, 5);
+
+        final optComma = Options.parse(['--char_ratio=1,3']);
+        expect(optComma.fontCharWidth, 1);
+        expect(optComma.fontCharHeight, 3);
+      });
+
+      test('supports Options.fromArgResults', () {
+        final results = Options.parser.parse([
+          '--cols',
+          '100',
+          '--contrast',
+          '2.0',
+        ]);
+        final options = Options.fromArgResults(results);
+        expect(options.cols, 100);
+        expect(options.contrast, 2.0);
+      });
+
       test('parses --cols', () {
         final options = Options.parse(['--cols', '80']);
         expect(options.cols, 80);
