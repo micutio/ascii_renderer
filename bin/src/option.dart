@@ -5,23 +5,20 @@ enum CharsetOption {
   asciiExtended,
   cp437;
 
-  static CharsetOption? fromString(String label) {
+  static CharsetOption? tryParse(String label) {
     return switch (label.toLowerCase()) {
       'ascii' => CharsetOption.ascii,
-      'ascii_extended' => CharsetOption.asciiExtended,
-      'extended' => CharsetOption.asciiExtended,
+      'ascii_extended' || 'extended' => CharsetOption.asciiExtended,
       'cp437' => CharsetOption.cp437,
       _ => null,
     };
   }
 
-  CharsetRange getRange() {
-    return switch (this) {
-      CharsetOption.ascii => CharsetRange(32, 128),
-      CharsetOption.asciiExtended => CharsetRange(32, 256),
-      CharsetOption.cp437 => CharsetRange(0, 256),
-    };
-  }
+  CharsetRange get range => switch (this) {
+    CharsetOption.ascii => CharsetRange.ascii,
+    CharsetOption.asciiExtended => CharsetRange.asciiExtended,
+    CharsetOption.cp437 => CharsetRange.cp437,
+  };
 }
 
 class Options {
@@ -78,8 +75,10 @@ class Options {
         case '--contrast':
           contrast = _valueToDouble(args, ++i, arg);
         case '--charset':
-          String charsetOptStr = _valueToStr(args, ++i, arg);
-          CharsetOption? charsetOpt = CharsetOption.fromString(charsetOptStr);
+          final String charsetOptStr = _valueToStr(args, ++i, arg);
+          final CharsetOption? charsetOpt = CharsetOption.tryParse(
+            charsetOptStr,
+          );
           if (charsetOpt == null) {
             throw FormatException('Unknown charset option: $charsetOptStr');
           }

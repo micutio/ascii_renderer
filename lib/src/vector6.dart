@@ -1,10 +1,23 @@
 /// Represents a 6-dimensional shape vector
 class Vector6 {
-  double v0 = 0, v1 = 0, v2 = 0, v3 = 0, v4 = 0, v5 = 0;
+  double v0;
+  double v1;
+  double v2;
+  double v3;
+  double v4;
+  double v5;
+
+  Vector6(this.v0, this.v1, this.v2, this.v3, this.v4, this.v5);
+
+  Vector6.origin() : v0 = 0.0, v1 = 0.0, v2 = 0.0, v3 = 0.0, v4 = 0.0, v5 = 0.0;
 
   double distanceSquared(Vector6 other) {
-    double d0 = v0 - other.v0, d1 = v1 - other.v1, d2 = v2 - other.v2;
-    double d3 = v3 - other.v3, d4 = v4 - other.v4, d5 = v5 - other.v5;
+    final double d0 = v0 - other.v0;
+    final double d1 = v1 - other.v1;
+    final double d2 = v2 - other.v2;
+    final double d3 = v3 - other.v3;
+    final double d4 = v4 - other.v4;
+    final double d5 = v5 - other.v5;
     return d0 * d0 + d1 * d1 + d2 * d2 + d3 * d3 + d4 * d4 + d5 * d5;
   }
 

@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:ascii_renderer/ascii_renderer.dart';
-import 'package:ascii_renderer/src/charset_range.dart';
 import 'package:image/image.dart' as img;
 
 import 'src/option.dart';
@@ -56,13 +55,13 @@ void main(List<String> args) {
 
   stdout.writeln('Initializing renderer (computing 6D shape vectors)...');
   final AsciiRenderer renderer = AsciiRenderer();
-  img.Image? fontSheet = img.decodeImage(fontFile.readAsBytesSync());
+  final img.Image? fontSheet = img.decodeImage(fontFile.readAsBytesSync());
   if (fontSheet == null) {
     stdout.writeln("Unable to load image ${options.fontPath}");
     return;
   }
 
-  final CharsetRange charsetRange = options.charset.getRange();
+  final CharsetRange charsetRange = options.charset.range;
 
   renderer.initializeFromFontSheet(
     fontSheet,

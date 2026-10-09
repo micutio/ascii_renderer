@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:ascii_renderer/ascii_renderer.dart';
-import 'package:ascii_renderer/src/charset_range.dart';
 import 'package:ascii_renderer/src/vector6.dart';
 import 'package:image/image.dart' as img;
 import 'package:test/test.dart';
@@ -14,15 +13,11 @@ void main() {
 
     setUp(() {
       renderer = AsciiRenderer();
-      CharsetOption charsetOption = CharsetOption.ascii;
-      renderer.initializeFromDefault(charsetOption.getRange());
+      final CharsetOption charsetOption = CharsetOption.ascii;
+      renderer.initializeFromDefault(charsetOption.range);
     });
 
     group('constants', () {
-      test('quantizationSteps is 15', () {
-        expect(AsciiRenderer.quantizationSteps, 15);
-      });
-
       test('charset has 256 characters', () {
         expect(AsciiRenderer.charset.length, 256);
       });
@@ -37,7 +32,7 @@ void main() {
     group('initializeFromDefault', () {
       test('initializes with ascii charset range', () {
         final newRenderer = AsciiRenderer();
-        newRenderer.initializeFromDefault(CharsetOption.ascii.getRange());
+        newRenderer.initializeFromDefault(CharsetOption.ascii.range);
         final image = img.Image(width: 10, height: 10);
         img.fill(image, color: img.ColorRgb8(128, 128, 128));
         final result = newRenderer.render(image, 5, 5, 1.0);
@@ -46,9 +41,7 @@ void main() {
 
       test('initializes with extended charset range', () {
         final newRenderer = AsciiRenderer();
-        newRenderer.initializeFromDefault(
-          CharsetOption.asciiExtended.getRange(),
-        );
+        newRenderer.initializeFromDefault(CharsetOption.asciiExtended.range);
         final image = img.Image(width: 10, height: 10);
         img.fill(image, color: img.ColorRgb8(128, 128, 128));
         final result = newRenderer.render(image, 5, 5, 1.0);
@@ -57,7 +50,7 @@ void main() {
 
       test('initializes with cp437 charset range', () {
         final newRenderer = AsciiRenderer();
-        newRenderer.initializeFromDefault(CharsetOption.cp437.getRange());
+        newRenderer.initializeFromDefault(CharsetOption.cp437.range);
         final image = img.Image(width: 10, height: 10);
         img.fill(image, color: img.ColorRgb8(128, 128, 128));
         final result = newRenderer.render(image, 5, 5, 1.0);
@@ -110,7 +103,7 @@ void main() {
           final fontRenderer = AsciiRenderer();
           fontRenderer.initializeFromFontSheet(
             testFontSheet,
-            CharsetOption.ascii.getRange(),
+            CharsetOption.ascii.range,
             1,
             2,
           );
@@ -127,7 +120,7 @@ void main() {
           final fontRenderer = AsciiRenderer();
           fontRenderer.initializeFromFontSheet(
             testFontSheet,
-            CharsetOption.ascii.getRange(),
+            CharsetOption.ascii.range,
             2,
             1,
           );
@@ -144,7 +137,7 @@ void main() {
           final fontRenderer = AsciiRenderer();
           fontRenderer.initializeFromFontSheet(
             testFontSheet,
-            CharsetOption.ascii.getRange(),
+            CharsetOption.ascii.range,
             1,
             1,
           );
@@ -159,7 +152,7 @@ void main() {
         final fontRenderer = AsciiRenderer();
         fontRenderer.initializeFromFontSheet(
           testFontSheet,
-          CharsetOption.cp437.getRange(),
+          CharsetOption.cp437.range,
           1,
           2,
         );
@@ -176,7 +169,7 @@ void main() {
           final fontRenderer = AsciiRenderer();
           fontRenderer.initializeFromFontSheet(
             fontImg,
-            CharsetOption.ascii.getRange(),
+            CharsetOption.ascii.range,
             1,
             2,
           );
@@ -285,9 +278,9 @@ void main() {
       });
 
       test('vectors at boundaries quantize correctly', () {
-        final v0 = Vector6()..v0 = 0.0;
-        final v1 = Vector6()..v0 = 1.0;
-        final vMid = Vector6()..v0 = 0.5;
+        final v0 = Vector6.origin()..v0 = 0.0;
+        final v1 = Vector6.origin()..v0 = 1.0;
+        final vMid = Vector6.origin()..v0 = 0.5;
 
         // 0.0 * 15 = 0
         // 1.0 * 15 = 15

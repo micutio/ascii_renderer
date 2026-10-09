@@ -1,16 +1,17 @@
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:ascii_renderer/src/charset_range.dart';
 import 'package:image/image.dart' as img;
 
 import 'src/character_shape.dart';
+import 'src/charset_range.dart';
 import 'src/vector6.dart';
+export 'src/charset_range.dart';
 
 /// Render a given image to ascii text.
 class AsciiRenderer {
   /// How many discrete steps to round our floats into.
-  static const int quantizationSteps = 15;
+  static const int _quantizationSteps = 15;
 
   /// Set of characters from which we render the ascii image.
   /// The null character is replaced with a space to avoid
@@ -38,7 +39,7 @@ class AsciiRenderer {
     _lookupCache.clear();
   }
 
-  /// Initialise the ASCII renderer with a front passed as image,
+  /// Initialise the ASCII renderer with a font passed as image,
   /// in form of raw bytes.
   void initializeFromFontSheet(
     img.Image fontSheetImg,
@@ -59,17 +60,17 @@ class AsciiRenderer {
   /// Creates a list of character shapes from the default font, Arial
   /// based on the character set [charset].
   void _initCharacterShapesFromDefault(CharsetRange charsetRange) {
-    int cellWidth = 12;
-    int cellHeight = 24;
+    final int cellWidth = 12;
+    final int cellHeight = 24;
 
     // Use a built-in bitmap font from the image package
     final font = img.arial24;
 
     for (int i = charsetRange.start; i < charsetRange.end; i++) {
-      String c = charset[i];
+      final String c = charset[i];
 
       // Create a small black canvas for the character
-      img.Image bmp = img.Image(width: cellWidth, height: cellHeight);
+      final img.Image bmp = img.Image(width: cellWidth, height: cellHeight);
       img.fill(bmp, color: img.ColorRgb8(0, 0, 0));
 
       // Draw white text
@@ -84,7 +85,7 @@ class AsciiRenderer {
 
       // Buffer view onto pixels
       final Uint8List pixelBuffer = bmp.toUint8List();
-      Vector6 v = _sampleCell6D(
+      final Vector6 v = _sampleCell6D(
         pixelBuffer,
         bmp.width,
         bmp.height,
@@ -107,15 +108,15 @@ class AsciiRenderer {
     int charHeightRatio,
   ) {
     // Most CP437 sheets are 16x16 characters.
-    int charWidth = fontSheet.width ~/ 16;
-    int charHeight = fontSheet.height ~/ 16;
+    final int charWidth = fontSheet.width ~/ 16;
+    final int charHeight = fontSheet.height ~/ 16;
 
     for (int i = charsetRange.start; i < charsetRange.end; i++) {
-      int col = i % 16;
-      int row = i ~/ 16;
+      final int col = i % 16;
+      final int row = i ~/ 16;
 
       // Crop the specific character from the grid.
-      img.Image charBmp = img.copyCrop(
+      final img.Image charBmp = img.copyCrop(
         fontSheet,
         x: col * charWidth,
         y: row * charHeight,
@@ -124,11 +125,11 @@ class AsciiRenderer {
       );
 
       // Map the index to the CP437 string character.
-      String charMapping = charset[i];
+      final String charMapping = charset[i];
       // Buffer view onto pixels
       final Uint8List pixelBuffer = charBmp.toUint8List();
       // Vector6 vec = _sampleCell6D(charBmp, 0, 0, charWidth, charHeight);
-      Vector6 vec = _sampleCell6DWithRatio(
+      final Vector6 vec = _sampleCell6DWithRatio(
         pixelBuffer,
         charWidthRatio,
         charHeightRatio,
@@ -153,7 +154,7 @@ class AsciiRenderer {
     }
 
     for (var cs in _characterShapes) {
-      Vector6 v = cs.shapeVector;
+      final Vector6 v = cs.shapeVector;
       for (int i = 0; i < 6; i++) {
         v[i] = _maxVectorVals[i] > 0 ? v[i] / _maxVectorVals[i] : 0.0;
       }
@@ -174,13 +175,13 @@ class AsciiRenderer {
     if (cellWidth == 0) cellWidth = 1;
     if (cellHeight == 0) cellHeight = 1;
 
-    StringBuffer sb = StringBuffer();
+    final StringBuffer sb = StringBuffer();
 
     // Buffer view onto pixels
     final Uint8List pixelBuffer = image.toUint8List();
     for (int y = 0; y < rows; y++) {
       for (int x = 0; x < columns; x++) {
-        Vector6 sample = _sampleCell6D(
+        final Vector6 sample = _sampleCell6D(
           pixelBuffer,
           image.width,
           image.height,
@@ -212,7 +213,7 @@ class AsciiRenderer {
   // --- Caching Implementation ---
 
   String _findBestCharacterCached(Vector6 target) {
-    int key = _generateCacheKey(target);
+    final int key = _generateCacheKey(target);
 
     if (_lookupCache.containsKey(key)) {
       return _lookupCache[key]!;
@@ -222,7 +223,7 @@ class AsciiRenderer {
     double bestDist = double.maxFinite;
 
     for (var cs in _characterShapes) {
-      double dist = cs.shapeVector.distanceSquared(target);
+      final double dist = cs.shapeVector.distanceSquared(target);
       if (dist < bestDist) {
         bestDist = dist;
         bestChar = cs.character;
@@ -237,9 +238,9 @@ class AsciiRenderer {
     int key = 0;
     for (int i = 0; i < 6; i++) {
       // Quantize float (0.0 -> 1.0) to an integer (0 -> 15)
-      int quantized = (v[i] * quantizationSteps).round().clamp(
+      final int quantized = (v[i] * _quantizationSteps).round().clamp(
         0,
-        quantizationSteps,
+        _quantizationSteps,
       );
 
       // Bitwise shift each value into its own 4-bit slot
@@ -265,34 +266,20 @@ class AsciiRenderer {
     int height,
   ) {
     if (widthRatio < heightRatio) {
-      double scaledWidth = widthRatio / heightRatio;
-      int charWidth = ((width * scaledWidth) as num).toInt();
-      int widthOffset = ((1 - scaledWidth) * width) ~/ 2;
+      final double scaledWidth = widthRatio / heightRatio;
+      final int charWidth = (width * scaledWidth).toInt();
+      final int widthOffset = ((1 - scaledWidth) * width) ~/ 2;
       // adapt parameters
       startX = startX + widthOffset;
       width = charWidth;
-      //return _sampleCell6D(
-      //  bmp,
-      //  startX + widthOffset,
-      //  startY,
-      //  charWidth,
-      //  height,
-      //);
     }
     if (widthRatio > heightRatio) {
-      double scaledHeight = heightRatio / widthRatio;
-      int charHeight = ((height * scaledHeight) as num).toInt();
-      int heightOffset = ((1 - scaledHeight) * height) ~/ 2;
+      final double scaledHeight = heightRatio / widthRatio;
+      final int charHeight = (height * scaledHeight).toInt();
+      final int heightOffset = ((1 - scaledHeight) * height) ~/ 2;
       // adapt parameters
       startY = startY + heightOffset;
       height = charHeight;
-      //return _sampleCell6D(
-      //  bmp,
-      //  startX,
-      //  startY + heightOffset,
-      //  width,
-      //  charHeight,
-      //);
     }
 
     return _sampleCell6D(
@@ -309,7 +296,7 @@ class AsciiRenderer {
 
   /// Samples average lightness values for all six zones of the image and stores
   /// them in a vector.
-  /// [bmp] is the image of the caracter to be classified.
+  /// [bmp] is the image of the character to be classified.
   Vector6 _sampleCell6D(
     Uint8List pixelBuffer,
     int imageWidth,
@@ -331,23 +318,22 @@ class AsciiRenderer {
         width,
         height,
       );
-      return Vector6()
-        ..v0 = lightness
-        ..v1 = lightness
-        ..v2 = lightness
-        ..v3 = lightness
-        ..v4 = lightness
-        ..v5 = lightness;
+      return Vector6(
+        lightness,
+        lightness,
+        lightness,
+        lightness,
+        lightness,
+        lightness,
+      );
     }
 
-    int halfW = width ~/ 2;
-    int thirdH = height ~/ 3;
-    int staggerY = height ~/ 12;
-
-    Vector6 v = Vector6();
+    final int halfW = width ~/ 2;
+    final int thirdH = height ~/ 3;
+    final int staggerY = height ~/ 12;
 
     // Left Column
-    v.v0 = _averageLightness(
+    final double v0 = _averageLightness(
       pixelBuffer,
       imageWidth,
       imageHeight,
@@ -357,7 +343,8 @@ class AsciiRenderer {
       halfW,
       thirdH,
     );
-    v.v2 = _averageLightness(
+
+    final double v2 = _averageLightness(
       pixelBuffer,
       imageWidth,
       imageHeight,
@@ -367,7 +354,8 @@ class AsciiRenderer {
       halfW,
       thirdH,
     );
-    v.v4 = _averageLightness(
+
+    final double v4 = _averageLightness(
       pixelBuffer,
       imageWidth,
       imageHeight,
@@ -379,7 +367,7 @@ class AsciiRenderer {
     );
 
     // Right Column
-    v.v1 = _averageLightness(
+    final double v1 = _averageLightness(
       pixelBuffer,
       imageWidth,
       imageHeight,
@@ -389,7 +377,7 @@ class AsciiRenderer {
       halfW,
       thirdH,
     );
-    v.v3 = _averageLightness(
+    final double v3 = _averageLightness(
       pixelBuffer,
       imageWidth,
       imageHeight,
@@ -399,7 +387,7 @@ class AsciiRenderer {
       halfW,
       thirdH,
     );
-    v.v5 = _averageLightness(
+    final double v5 = _averageLightness(
       pixelBuffer,
       imageWidth,
       imageHeight,
@@ -410,7 +398,7 @@ class AsciiRenderer {
       thirdH,
     );
 
-    return v;
+    return Vector6(v0, v1, v2, v3, v4, v5);
   }
 
   /// Computes the average lightness for [bmp] in a rectangular zone delimited
