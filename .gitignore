@@ -3,6 +3,7 @@
 # Section 1 - Files specific to asci_renderer.
 
 input.jpg
+input.png
 output.txt
 
 # Section 2 - General Dart project files.

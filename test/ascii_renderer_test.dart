@@ -1,7 +1,12 @@
+import 'dart:io';
+
 import 'package:ascii_renderer/ascii_renderer.dart';
+import 'package:ascii_renderer/src/charset_range.dart';
 import 'package:ascii_renderer/src/vector6.dart';
 import 'package:image/image.dart' as img;
 import 'package:test/test.dart';
+
+import '../bin/src/option.dart';
 
 void main() {
   group('AsciiRenderer', () {
@@ -9,7 +14,8 @@ void main() {
 
     setUp(() {
       renderer = AsciiRenderer();
-      renderer.initializeFromDefault();
+      CharsetOption charsetOption = CharsetOption.ascii;
+      renderer.initializeFromDefault(charsetOption.getRange());
     });
 
     group('constants', () {
@@ -28,16 +34,157 @@ void main() {
       });
     });
 
-    group('initialize', () {
-      test('creates character shapes for all charset characters', () {
-        // After initialize, the renderer should have shapes for each char
-        expect(AsciiRenderer.charset.length, 256);
+    group('initializeFromDefault', () {
+      test('initializes with ascii charset range', () {
+        final newRenderer = AsciiRenderer();
+        newRenderer.initializeFromDefault(CharsetOption.ascii.getRange());
+        final image = img.Image(width: 10, height: 10);
+        img.fill(image, color: img.ColorRgb8(128, 128, 128));
+        final result = newRenderer.render(image, 5, 5, 1.0);
+        expect(result.isNotEmpty, true);
       });
 
-      test('initialization completes without error', () {
+      test('initializes with extended charset range', () {
         final newRenderer = AsciiRenderer();
-        newRenderer.initializeFromDefault();
-        // If we get here without throwing, the test passes
+        newRenderer.initializeFromDefault(
+          CharsetOption.asciiExtended.getRange(),
+        );
+        final image = img.Image(width: 10, height: 10);
+        img.fill(image, color: img.ColorRgb8(128, 128, 128));
+        final result = newRenderer.render(image, 5, 5, 1.0);
+        expect(result.isNotEmpty, true);
+      });
+
+      test('initializes with cp437 charset range', () {
+        final newRenderer = AsciiRenderer();
+        newRenderer.initializeFromDefault(CharsetOption.cp437.getRange());
+        final image = img.Image(width: 10, height: 10);
+        img.fill(image, color: img.ColorRgb8(128, 128, 128));
+        final result = newRenderer.render(image, 5, 5, 1.0);
+        expect(result.isNotEmpty, true);
+      });
+
+      test(
+        'initializes with custom CharsetRange restricted to uppercase letters',
+        () {
+          final newRenderer = AsciiRenderer();
+          // Indices 65 ('A') to 91 ('Z' is index 90)
+          newRenderer.initializeFromDefault(CharsetRange(65, 91));
+          final image = img.Image(width: 10, height: 10);
+          img.fill(image, color: img.ColorRgb8(128, 128, 128));
+          final result = newRenderer.render(image, 5, 5, 1.0);
+          final chars = result.replaceAll('\n', '').replaceAll('\r', '');
+          expect(chars.isNotEmpty, true);
+          for (int i = 0; i < chars.length; i++) {
+            final codeUnit = chars.codeUnitAt(i);
+            expect(codeUnit >= 65 && codeUnit <= 90, isTrue);
+          }
+        },
+      );
+    });
+
+    group('initializeFromFontSheet', () {
+      late img.Image testFontSheet;
+
+      setUp(() {
+        // Font sheets are 16x16 characters
+        testFontSheet = img.Image(width: 160, height: 320);
+        img.fill(testFontSheet, color: img.ColorRgb8(0, 0, 0));
+        for (int row = 0; row < 16; row++) {
+          for (int col = 0; col < 16; col++) {
+            img.fillRect(
+              testFontSheet,
+              x1: col * 10 + 2,
+              y1: row * 20 + 2,
+              x2: col * 10 + 8,
+              y2: row * 20 + 18,
+              color: img.ColorRgb8(255, 255, 255),
+            );
+          }
+        }
+      });
+
+      test(
+        'initializes with font sheet where widthRatio < heightRatio (1x2)',
+        () {
+          final fontRenderer = AsciiRenderer();
+          fontRenderer.initializeFromFontSheet(
+            testFontSheet,
+            CharsetOption.ascii.getRange(),
+            1,
+            2,
+          );
+          final image = img.Image(width: 20, height: 20);
+          img.fill(image, color: img.ColorRgb8(128, 128, 128));
+          final result = fontRenderer.render(image, 5, 5, 1.0);
+          expect(result.isNotEmpty, true);
+        },
+      );
+
+      test(
+        'initializes with font sheet where widthRatio > heightRatio (2x1)',
+        () {
+          final fontRenderer = AsciiRenderer();
+          fontRenderer.initializeFromFontSheet(
+            testFontSheet,
+            CharsetOption.ascii.getRange(),
+            2,
+            1,
+          );
+          final image = img.Image(width: 20, height: 20);
+          img.fill(image, color: img.ColorRgb8(128, 128, 128));
+          final result = fontRenderer.render(image, 5, 5, 1.0);
+          expect(result.isNotEmpty, true);
+        },
+      );
+
+      test(
+        'initializes with font sheet where widthRatio == heightRatio (1x1)',
+        () {
+          final fontRenderer = AsciiRenderer();
+          fontRenderer.initializeFromFontSheet(
+            testFontSheet,
+            CharsetOption.ascii.getRange(),
+            1,
+            1,
+          );
+          final image = img.Image(width: 20, height: 20);
+          img.fill(image, color: img.ColorRgb8(128, 128, 128));
+          final result = fontRenderer.render(image, 5, 5, 1.0);
+          expect(result.isNotEmpty, true);
+        },
+      );
+
+      test('initializes with font sheet and cp437 charset range', () {
+        final fontRenderer = AsciiRenderer();
+        fontRenderer.initializeFromFontSheet(
+          testFontSheet,
+          CharsetOption.cp437.getRange(),
+          1,
+          2,
+        );
+        final image = img.Image(width: 20, height: 20);
+        img.fill(image, color: img.ColorRgb8(128, 128, 128));
+        final result = fontRenderer.render(image, 5, 5, 1.0);
+        expect(result.isNotEmpty, true);
+      });
+
+      test('initializes with real font bitmap assets/font/iosevka.png', () {
+        final fontFile = File('assets/font/iosevka.png');
+        if (fontFile.existsSync()) {
+          final fontImg = img.decodeImage(fontFile.readAsBytesSync())!;
+          final fontRenderer = AsciiRenderer();
+          fontRenderer.initializeFromFontSheet(
+            fontImg,
+            CharsetOption.ascii.getRange(),
+            1,
+            2,
+          );
+          final image = img.Image(width: 20, height: 20);
+          img.fill(image, color: img.ColorRgb8(128, 128, 128));
+          final result = fontRenderer.render(image, 5, 5, 1.0);
+          expect(result.isNotEmpty, true);
+        }
       });
     });
 
