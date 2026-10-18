@@ -12,6 +12,8 @@ export 'src/charset_range.dart';
 class AsciiRenderer {
   /// How many discrete steps to round our floats into.
   static const int _quantizationSteps = 15;
+  static const double _densityWeight = 0.35;
+  static const double _shapeWeight = 0.65;
 
   /// Set of characters from which we render the ascii image.
   /// The null character is replaced with a space to avoid
@@ -27,7 +29,6 @@ class AsciiRenderer {
       "αßΓπΣσµτΦΘΩδ∞φε∩≡±≥≤⌠⌡÷≈°∙·√ⁿ²■ "; // 224-255
 
   final List<CharacterShape> _characterShapes = [];
-  final List<double> _maxVectorVals = List.filled(6, 0.0);
 
   /// The Cache: Maps a quantized 6D shape directly to a character
   final Map<int, String> _lookupCache = {};
@@ -36,7 +37,6 @@ class AsciiRenderer {
   void initializeFromDefault(CharsetRange charsetRange) {
     _characterShapes.clear();
     _initCharacterShapesFromDefault(charsetRange);
-    _normalizeCharacterValues();
     _lookupCache.clear();
   }
 
@@ -55,7 +55,6 @@ class AsciiRenderer {
       charWidth,
       charHeight,
     );
-    _normalizeCharacterValues();
     _lookupCache.clear();
   }
 
@@ -146,22 +145,6 @@ class AsciiRenderer {
     }
   }
 
-  /// Normalize character light value vectors.
-  void _normalizeCharacterValues() {
-    for (var i = 0; i < 6; i++) {
-      _maxVectorVals[i] = _characterShapes
-          .map((cs) => cs.shapeVector[i])
-          .reduce(max);
-    }
-
-    for (final cs in _characterShapes) {
-      final v = cs.shapeVector;
-      for (var i = 0; i < 6; i++) {
-        v[i] = _maxVectorVals[i] > 0 ? v[i] / _maxVectorVals[i] : 0.0;
-      }
-    }
-  }
-
   /// Render an image to ASCII characters.
   /// Returns the image as ASCII string.
   String render(
@@ -194,10 +177,6 @@ class AsciiRenderer {
         );
 
         for (var i = 0; i < 6; i++) {
-          sample[i] = _maxVectorVals[i] > 0
-              ? sample[i] / _maxVectorVals[i]
-              : 0.0;
-
           if (contrastExponent != 1.0) {
             sample[i] = pow(sample[i], contrastExponent).toDouble();
           }
@@ -224,7 +203,7 @@ class AsciiRenderer {
     var bestDist = double.maxFinite;
 
     for (final cs in _characterShapes) {
-      final dist = cs.shapeVector.distanceSquared(target);
+      final dist = _weightedDistance(cs.shapeVector, target);
       if (dist < bestDist) {
         bestDist = dist;
         bestChar = cs.character;
@@ -233,6 +212,30 @@ class AsciiRenderer {
 
     _lookupCache[key] = bestChar;
     return bestChar;
+  }
+
+  double _weightedDistance(Vector6 character, Vector6 target) {
+    var characterTotal = 0.0;
+    var targetTotal = 0.0;
+    for (var i = 0; i < 6; i++) {
+      characterTotal += character[i];
+      targetTotal += target[i];
+    }
+    final densityError = (characterTotal - targetTotal).abs() / 6.0;
+    var shapeError = 0.0;
+
+    if ((characterTotal == 0.0) != (targetTotal == 0.0)) {
+      shapeError = 1.0;
+    } else if (characterTotal != 0.0) {
+      for (var i = 0; i < 6; i++) {
+        shapeError += (character[i] / characterTotal - target[i] / targetTotal)
+            .abs();
+      }
+      // Total variation distance ranges from 0 (same shape) to 1.
+      shapeError *= 0.5;
+    }
+
+    return _densityWeight * densityError + _shapeWeight * shapeError;
   }
 
   int _generateCacheKey(Vector6 v) {

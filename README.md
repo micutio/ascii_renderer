@@ -19,6 +19,12 @@ dart run bin/ascii_renderer.dart --input input.jpg --output output.txt --cols 80
 - `--charset` defaults to `ascii` (possible values: `ascii`, `extended`, `cp437`)
 - `--help` prints the same options.
 
+## Character matching
+
+Glyph and image-cell vectors use absolute sampled luminance from `0.0` to `1.0`; the selected charset does not rescale those values. Matching combines mean-density error (weight `0.35`) with the total-variation distance between normalized six-region shapes (weight `0.65`). These weights are fixed internally.
+
+`--contrast` raises each sampled image-region luminance to the specified exponent before matching. The default `1.0` leaves samples unchanged; values above `1.0` emphasize brighter regions and sharpen the matched structure.
+
 ## TODO List
 
 - [x] Fix font used for classification (arial does not fully support CP437)

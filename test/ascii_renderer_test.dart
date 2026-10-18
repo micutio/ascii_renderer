@@ -5,6 +5,39 @@ import 'package:ascii_renderer/src/vector6.dart';
 import 'package:image/image.dart' as img;
 import 'package:test/test.dart';
 
+img.Image _blankFontSheet() {
+  final image = img.Image(width: 16 * 6, height: 16 * 9);
+  img.fill(image, color: img.ColorRgb8(0, 0, 0));
+  return image;
+}
+
+void _fillCharacterRegion(
+  img.Image fontSheet,
+  int characterCode,
+  int region,
+  int whitePixelCount,
+) {
+  final cellX = (characterCode % 16) * 6;
+  final cellY = (characterCode ~/ 16) * 9;
+  final regionX = (region % 2) * 3;
+  final regionY = (region ~/ 2) * 3;
+
+  for (var i = 0; i < whitePixelCount; i++) {
+    fontSheet.setPixel(
+      cellX + regionX + i % 3,
+      cellY + regionY + i ~/ 3,
+      img.ColorRgb8(255, 255, 255),
+    );
+  }
+}
+
+img.Image _sampleWithRegion(int region, int whitePixelCount) {
+  final image = img.Image(width: 6, height: 9);
+  img.fill(image, color: img.ColorRgb8(0, 0, 0));
+  _fillCharacterRegion(image, 0, region, whitePixelCount);
+  return image;
+}
+
 void main() {
   group('AsciiRenderer', () {
     late AsciiRenderer renderer;
@@ -220,12 +253,117 @@ void main() {
         expect(resultLowContrast.isNotEmpty, true);
       });
 
+      test('contrast exponent can change the selected glyph', () {
+        final fontSheet = _blankFontSheet();
+        for (var region = 0; region < 6; region++) {
+          _fillCharacterRegion(fontSheet, 33, region, 6);
+          _fillCharacterRegion(fontSheet, 34, region, 3);
+        }
+
+        final contrastRenderer = AsciiRenderer()
+          ..initializeFromFontSheet(
+            fontSheet,
+            const CharsetRange(33, 35),
+            1,
+            1,
+          );
+        final image = img.Image(width: 1, height: 1);
+        img.fill(image, color: img.ColorRgb8(128, 128, 128));
+
+        expect(contrastRenderer.render(image, 1, 1, 1.0), '!\n');
+        expect(contrastRenderer.render(image, 1, 1, 2.0), '"\n');
+      });
+
+      test('default font baseline retains the underline shape', () {
+        final defaultRenderer = AsciiRenderer()
+          ..initializeFromDefault(CharsetRange.ascii);
+        final underline = img.Image(width: 12, height: 24);
+        img.fill(underline, color: img.ColorRgb8(0, 0, 0));
+        img.drawString(
+          underline,
+          '_',
+          font: img.arial24,
+          color: img.ColorRgb8(255, 255, 255),
+          x: -2,
+          y: -2,
+        );
+
+        expect(defaultRenderer.render(underline, 1, 1, 1.0), '_\n');
+      });
+
       test('handles zero cell dimensions gracefully', () {
         final image = img.Image(width: 1, height: 1);
 
         // Should not throw
         final result = renderer.render(image, 1000, 1000, 1.0);
         expect(result.isNotEmpty, true);
+      });
+
+      test('matches shape separately from total density', () {
+        final fontSheet = _blankFontSheet();
+        _fillCharacterRegion(fontSheet, 33, 4, 9);
+        _fillCharacterRegion(fontSheet, 34, 2, 2);
+        _fillCharacterRegion(fontSheet, 35, 2, 9);
+        final shapeRenderer = AsciiRenderer()
+          ..initializeFromFontSheet(
+            fontSheet,
+            const CharsetRange(33, 36),
+            1,
+            1,
+          );
+        final image = _sampleWithRegion(4, 2);
+
+        expect(shapeRenderer.render(image, 1, 1, 1.0), '!\n');
+      });
+
+      test('character matching is independent of charset maxima', () {
+        final fontSheet = _blankFontSheet();
+        _fillCharacterRegion(fontSheet, 33, 4, 9);
+        _fillCharacterRegion(fontSheet, 34, 2, 2);
+        _fillCharacterRegion(fontSheet, 35, 2, 9);
+        final image = _sampleWithRegion(4, 2);
+        final sparseRenderer = AsciiRenderer()
+          ..initializeFromFontSheet(
+            fontSheet,
+            const CharsetRange(33, 35),
+            1,
+            1,
+          );
+        final denseRenderer = AsciiRenderer()
+          ..initializeFromFontSheet(
+            fontSheet,
+            const CharsetRange(33, 36),
+            1,
+            1,
+          );
+
+        expect(sparseRenderer.render(image, 1, 1, 1.0), '!\n');
+        expect(denseRenderer.render(image, 1, 1, 1.0), '!\n');
+      });
+
+      test('handles zero vectors and preserves punctuation detail', () {
+        final fontSheet = _blankFontSheet();
+        _fillCharacterRegion(fontSheet, 46, 4, 1);
+        _fillCharacterRegion(fontSheet, 95, 4, 9);
+        final punctuationRenderer = AsciiRenderer()
+          ..initializeFromFontSheet(
+            fontSheet,
+            const CharsetRange(46, 96),
+            1,
+            1,
+          );
+        final blackImage = img.Image(width: 6, height: 9);
+        img.fill(blackImage, color: img.ColorRgb8(0, 0, 0));
+
+        expect(punctuationRenderer.render(blackImage, 1, 1, 1.0), '/\n');
+        expect(
+          punctuationRenderer.render(_sampleWithRegion(4, 1), 1, 1, 1.0),
+          '.\n',
+        );
+        expect(
+          punctuationRenderer.render(_sampleWithRegion(4, 9), 1, 1, 1.0),
+          '_\n',
+        );
       });
     });
 
