@@ -204,7 +204,7 @@ jobs:
       # The first publishes stay drafts so the archives can be checked
       # before the release is public. Set draft to false once that is trusted.
       - name: Publish GitHub Release
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3.0.4
         with:
           tag_name: ${{ needs.verify.outputs.tag }}
           name: ${{ needs.verify.outputs.tag }}
